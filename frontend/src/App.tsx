@@ -1,25 +1,19 @@
-import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import HomePage from "./pages/HomePage";
+import UploadPage from "./pages/UploadPage";
+import AboutPage from "./pages/AboutPage";
 
 function App() {
-  const [message, setMessage] = useState("Loading...");
-
-  useEffect(() => {
-    fetch("http://localhost:8000")
-      .then((res) => {
-        console.log("Response:", res);
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Data:", data);
-        setMessage(data.message);
-      })
-      .catch((err) => {
-        console.error(err);
-        setMessage("Failed to connect");
-      });
-  }, []);
-
-  return <h1>{message}</h1>;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/upload" element={<UploadPage />} />
+        <Route path="/about" element={<AboutPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;
