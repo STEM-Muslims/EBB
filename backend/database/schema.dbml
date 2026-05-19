@@ -1,0 +1,46 @@
+Table users {
+  id uuid [pk]
+  email varchar [unique, not null]
+  name varchar [not null]
+  role varchar [not null, note: 'uploader | admin | viewer']
+  password_hash varchar
+  created_at timestamp [default: `now()`]
+  updated_at timestamp
+}
+
+Table videos {
+  id uuid [pk]
+  uploader_id uuid [ref: > users.id, not null]
+  title varchar [not null]
+  description text
+  s3_key varchar [unique, not null, note: 'object key in S3']
+  s3_bucket varchar [not null]
+  file_size_bytes bigint
+  status varchar [note: 'pending | processing | published | failed']
+  youtube_url varchar [note: 'set by collaborator upload flow']
+  uploaded_at timestamp [default: `now()`]
+  updated_at timestamp
+}
+
+Table subscriptions {
+  id uuid [pk]
+  user_id uuid [ref: > users.id]
+  notify_email varchar [not null, note: 'replaces NOTIFY_EMAILS .env when auth lands']
+  active boolean [default: true]
+  subscribed_at timestamp [default: `now()`]
+}
+
+Table tags {
+  id uuid [pk]
+  name varchar [unique, not null]
+  slug varchar [unique, not null]
+}
+
+Table video_tags {
+  video_id uuid [ref: > videos.id]
+  tag_id uuid [ref: > tags.id]
+
+  indexes {
+    (video_id, tag_id) [pk]
+  }
+}
