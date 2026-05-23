@@ -1,0 +1,184 @@
+// schema.dbml
+// draft schema for stemm_ebb_prep
+// SQLModel (Python) is the runtime source of truth — this file is design/docs only
+// visualise via dbdiagram.io
+
+// ============================================================
+// CONTENT HIERARCHY (4 levels)
+// ============================================================
+
+Table subjects {
+  id    int          [pk, increment]
+  name  varchar(100) [not null, note: 'top-level domain e.g. Mathematics, Physics']
+
+  Note: 'level 1 — broad academic subject'
+}
+
+Table topics {  
+  id          int          [pk, increment]
+  subject_id  int          [ref: > subjects.id, not null]
+  name        varchar(150) [not null, note: 'e.g. Pure, Statistics, Mechanics']
+
+  Note: 'level 2 — major area within a subject'
+}
+
+Table sub_topics {
+  id        int          [pk, increment]
+  topic_id  int          [ref: > topics.id, not null]
+  name      varchar(150) [not null, note: 'a chapter, e.g. Calculus, Trigonometry']
+
+  Note: 'level 3 — chapter-level grouping'
+}
+
+Table lessons {
+  id            int          [pk, increment]
+  sub_topic_id  int          [ref: > sub_topics.id, not null]
+  name          varchar(200) [not null, note: 'e.g. Chain Rule, Product Rule']
+
+  Note {
+    '''
+    level 4 — the actual video-level topic.
+    each entry maps to one video per language.
+    '''
+  }
+}
+
+// ============================================================
+// USERS & ROLES
+// ============================================================
+
+Table users {
+  id          int          [pk, increment]
+  email       varchar(255) [not null, unique, note: 'login identifier']
+  name        varchar(150) [not null]
+  password    varchar(255) [not null, note: 'bcrypt/argon2 hash — never plaintext']
+  created_at  timestamp    [not null, default: `now()`]
+
+  Note: 'all platform accounts — tutors, translators, admins, viewers'
+}
+
+Table roles {
+  id    int         [pk, increment]
+  name  varchar(50) [not null, unique, note: 'e.g. tutor, translator, admin, viewer, reviewer']
+
+  Note: 'defines all possible roles on the platform'
+}
+
+Table user_roles {
+  user_id  int [ref: > users.id]
+  role_id  int [ref: > roles.id]
+
+  indexes {
+    (user_id, role_id) [pk]
+  }
+
+  Note: 'M:N — a user can hold multiple roles (e.g. tutor AND translator)'
+}
+
+Table languages {
+  id        int         [pk, increment]
+  language  varchar(50) [not null, unique, note: 'e.g. English, Arabic, Somali']
+
+  Note: 'supported languages for video translation'
+}
+
+Table translators {
+  id           int         [pk, increment]
+  user_id      int         [ref: > users.id, not null]
+  language_id  int         [ref: > languages.id, not null]
+  proficiency  varchar(20) [not null, note: 'enum: native | fluent | intermediate']
+
+  Note {
+    '''
+    links a user to a language they can translate into, with skill level.
+    a user can appear here multiple times (one row per language).
+    '''
+  }
+}
+
+// ============================================================
+// VIDEOS & TRANSLATION
+// ============================================================
+
+Table videos {
+  id                int          [pk, increment]
+  title             varchar(200) [not null]
+  lesson_id  int          [ref: > lessons.id, not null, note: 'the level-4 topic this video covers']
+  tutor_id          int          [ref: > users.id, not null, note: 'user who recorded the video']
+  date_time         timestamp    [not null, default: `now()`]
+
+  // meta_data (broken out from the sketch)
+  descrip    text
+  size       bigint       [note: 'file size in bytes']
+  url        varchar(500) [note: 'playback URL or CDN link']
+  s3_key     varchar(500) [note: 'object key inside the S3 bucket']
+  s3_bucket  varchar(100) [note: 'name of the S3 bucket holding the file']
+
+  Note {
+    '''
+    stores uploaded video content produced by stemm.
+    physical file lives in S3 — this table only holds metadata.
+    one logical video per (lesson, language).
+    '''
+  }
+}
+
+Table translated_by {
+  translator_id  int [ref: > translators.id]
+  video_id       int [ref: > videos.id]
+
+  indexes {
+    (translator_id, video_id) [pk]
+  }
+
+  Note: 'M:N — a video can have multiple translators, a translator handles many videos'
+}
+
+// ============================================================
+// CHARITIES
+// ============================================================
+
+Table charities {
+  id    int          [pk, increment]
+  name  varchar(150) [not null]
+
+  Note: 'partner charities that stemm distributes video content to'
+}
+
+Table sent_to {
+  video_id    int [ref: > videos.id]
+  charity_id  int [ref: > charities.id]
+  sent_at     timestamp [default: `now()`, note: 'when this video was distributed to this charity']
+
+  indexes {
+    (video_id, charity_id) [pk]
+  }
+
+  Note: 'M:N — a video can be sent to many charities; a charity receives many videos'
+}
+
+// ============================================================
+// WORKFLOW (jobs & assignments)
+// ============================================================
+
+Table jobs {
+  id        int          [pk, increment]
+  job_name  varchar(100) [not null, note: 'e.g. record, arabic_translator, somali_translator']
+
+  Note: 'defines a type of task that can be assigned to a user'
+}
+
+Table assignments {
+  id                int [pk, increment]
+  lesson_id  int [ref: > lessons
+.id, not null, note: 'the topic the job is for']
+  user_id           int [ref: > users.id, not null, note: 'who is assigned']
+  job_id            int [ref: > jobs.id, not null, note: 'what kind of work']
+
+  Note {
+    '''
+    workflow tracking — assigns a user a job for a topic.
+    e.g. user 12 is assigned "arabic_translator" for lesson 45.
+    '''
+  }
+}
