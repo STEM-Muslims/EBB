@@ -2,7 +2,9 @@
 backend/venv/
 backend/__pycache__/
 backend/app/__pycache__/
+backend/alembic/__pycache__/
 backend/*.pyc
+__pycache__/
 
 # Node
 frontend/node_modules/
