@@ -2,9 +2,12 @@ import os
 import sys
 from logging.config import fileConfig
 
+import app.models
+import sqlalchemy as sa
 from alembic import context
-from app.models import SQLModel
 from sqlalchemy import engine_from_config, pool
+from sqlmodel import SQLModel
+from sqlmodel.sql.sqltypes import AutoString
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
@@ -27,6 +30,12 @@ target_metadata = SQLModel.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+
+def render_item(type_, obj, autogen_context):
+    if type_ == "type" and isinstance(obj, AutoString):
+        return "sa.String()"
+    return False
 
 
 def run_migrations_offline() -> None:
@@ -67,7 +76,12 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            render_item=render_item,
+        )
 
         with context.begin_transaction():
             context.run_migrations()
