@@ -1,12 +1,14 @@
 from app.db import engine
 from app.dependencies import get_db
 from app.models import User
+from app.routers import auth
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, SQLModel, select
 
 app = FastAPI()
 
+app.include_router(auth.router)
 
 app.add_middleware(
     CORSMiddleware,
