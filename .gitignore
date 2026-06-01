@@ -26,3 +26,7 @@ frontend/dist/
 
 # Misc
 coverage/
+
+#Claude
+CLAUDE.md
+.claude/
