@@ -2,10 +2,11 @@ import time
 from urllib.parse import urlencode
 
 import httpx
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
-from jose import JWTError, jwt
+from jose import jwt
 
+from app.dependencies import require_admin
 from app.config import (
     ALLOWED_ADMIN_EMAILS,
     BACKEND_URL,
@@ -36,14 +37,6 @@ def _create_token(email: str) -> str:
         JWT_SECRET,
         algorithm=JWT_ALGORITHM,
     )
-
-
-def _verify_token(token: str) -> str:
-    try:
-        data = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return data["sub"]
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
 @router.get("/google")
@@ -139,8 +132,5 @@ async def microsoft_callback(code: str = None, error: str = None):
 
 
 @router.get("/me")
-def get_me(authorization: str = Header(default=None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    email = _verify_token(authorization.removeprefix("Bearer "))
+def get_me(email: str = Depends(require_admin)):
     return {"email": email}
