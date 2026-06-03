@@ -16,9 +16,6 @@ from app.config import (
     JWT_ALGORITHM,
     JWT_EXPIRY_SECONDS,
     JWT_SECRET,
-    MICROSOFT_CLIENT_ID,
-    MICROSOFT_CLIENT_SECRET,
-    MICROSOFT_TENANT_ID,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -26,9 +23,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 _GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 _GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 _GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
-
-_MS_AUTH_URL = f"https://login.microsoftonline.com/{MICROSOFT_TENANT_ID}/oauth2/v2.0/authorize"
-_MS_TOKEN_URL = f"https://login.microsoftonline.com/{MICROSOFT_TENANT_ID}/oauth2/v2.0/token"
 
 
 def _create_token(email: str) -> str:
@@ -81,51 +75,6 @@ async def google_callback(code: str = None, error: str = None):
 
     print(f"DEBUG google_callback: email={repr(email)}, allowed={ALLOWED_ADMIN_EMAILS}")
     if email not in ALLOWED_ADMIN_EMAILS:
-        return RedirectResponse(f"{FRONTEND_URL}/admin/login?error=AccessDenied")
-
-    return RedirectResponse(f"{FRONTEND_URL}/admin/callback?token={_create_token(email)}")
-
-
-@router.get("/microsoft")
-def microsoft_login():
-    params = {
-        "client_id": MICROSOFT_CLIENT_ID,
-        "redirect_uri": f"{BACKEND_URL}/auth/microsoft/callback",
-        "response_type": "code",
-        "scope": "openid email profile",
-        "response_mode": "query",
-    }
-    return RedirectResponse(f"{_MS_AUTH_URL}?{urlencode(params)}")
-
-
-@router.get("/microsoft/callback")
-async def microsoft_callback(code: str = None, error: str = None):
-    if error or not code:
-        return RedirectResponse(f"{FRONTEND_URL}/admin/login?error=AccessDenied")
-
-    async with httpx.AsyncClient() as client:
-        token_resp = await client.post(
-            _MS_TOKEN_URL,
-            data={
-                "code": code,
-                "client_id": MICROSOFT_CLIENT_ID,
-                "client_secret": MICROSOFT_CLIENT_SECRET,
-                "redirect_uri": f"{BACKEND_URL}/auth/microsoft/callback",
-                "grant_type": "authorization_code",
-                "scope": "openid email profile",
-            },
-        )
-        token_data = token_resp.json()
-
-    id_token = token_data.get("id_token")
-    if not id_token:
-        return RedirectResponse(f"{FRONTEND_URL}/admin/login?error=AccessDenied")
-
-    # Read claims without verifying signature — safe since token came directly from Microsoft
-    claims = jwt.get_unverified_claims(id_token)
-    email = (claims.get("email") or claims.get("preferred_username") or "").lower()
-
-    if not email or email not in ALLOWED_ADMIN_EMAILS:
         return RedirectResponse(f"{FRONTEND_URL}/admin/login?error=AccessDenied")
 
     return RedirectResponse(f"{FRONTEND_URL}/admin/callback?token={_create_token(email)}")
