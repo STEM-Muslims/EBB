@@ -1,26 +1,12 @@
-import { Link } from "react-router-dom";
+import styles from "./HomePage.module.css";
 
-function HomePage() {
+export default function HomePage() {
   return (
-    <div>
-      <h1>Home</h1>
-
-      <nav>
-        <ul>
-          <li>
-            <Link to="/upload">Upload</Link>
-          </li>
-
-          <li>
-            <Link to="/about">About</Link>
-          </li>
-          <li>
-            <Link to="/admin/login">Admin Login</Link>
-          </li>
-        </ul>
-      </nav>
+    <div className={styles.page}>
+      <h1 className={styles.heading}>Welcome</h1>
+      <p className={styles.sub}>
+        Select a section from the sidebar to get started.
+      </p>
     </div>
   );
 }
-
-export default HomePage;

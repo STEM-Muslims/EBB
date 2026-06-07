@@ -2,13 +2,7 @@ import time
 from urllib.parse import urlencode
 
 import httpx
-from fastapi import APIRouter, Depends
-from fastapi.responses import RedirectResponse
-from jose import jwt
-
-from app.dependencies import require_admin
 from app.config import (
-    ALLOWED_ADMIN_EMAILS,
     BACKEND_URL,
     FRONTEND_URL,
     GOOGLE_CLIENT_ID,
@@ -17,6 +11,13 @@ from app.config import (
     JWT_EXPIRY_SECONDS,
     JWT_SECRET,
 )
+from app.db import engine
+from app.dependencies import require_admin
+from app.models.user import User
+from fastapi import APIRouter, Depends
+from fastapi.responses import RedirectResponse
+from jose import jwt
+from sqlmodel import Session, select
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -61,7 +62,6 @@ async def google_callback(code: str = None, error: str = None):
                 "grant_type": "authorization_code",
             },
         )
-        print(f"DEBUG token_resp: {token_resp.status_code} {token_resp.text}")
         access_token = token_resp.json().get("access_token")
         if not access_token:
             return RedirectResponse(f"{FRONTEND_URL}/admin/login?error=AccessDenied")
@@ -70,14 +70,24 @@ async def google_callback(code: str = None, error: str = None):
             _GOOGLE_USERINFO_URL,
             headers={"Authorization": f"Bearer {access_token}"},
         )
-        print(f"DEBUG userinfo: {user_resp.status_code} {user_resp.text}")
         email = user_resp.json().get("email", "").lower()
+        google_id = user_resp.json().get("sub")
 
-    print(f"DEBUG google_callback: email={repr(email)}, allowed={ALLOWED_ADMIN_EMAILS}")
-    if email not in ALLOWED_ADMIN_EMAILS:
+    if not email:
         return RedirectResponse(f"{FRONTEND_URL}/admin/login?error=AccessDenied")
 
-    return RedirectResponse(f"{FRONTEND_URL}/admin/callback?token={_create_token(email)}")
+    with Session(engine) as session:
+        user = session.exec(select(User).where(User.email == email)).first()
+        if not user or not user.is_admin:
+            return RedirectResponse(f"{FRONTEND_URL}/admin/login?error=AccessDenied")
+        if not user.google_id:
+            user.google_id = google_id
+            session.add(session.merge(user))
+            session.commit()
+
+    return RedirectResponse(
+        f"{FRONTEND_URL}/admin/callback?token={_create_token(email)}"
+    )
 
 
 @router.get("/me")

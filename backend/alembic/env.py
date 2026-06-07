@@ -5,10 +5,12 @@ from logging.config import fileConfig
 import app.models
 import sqlalchemy as sa
 from alembic import context
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 from sqlmodel.sql.sqltypes import AutoString
 
+load_dotenv()
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 # this is the Alembic Config object, which provides

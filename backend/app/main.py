@@ -1,4 +1,4 @@
-from app.routers import auth, files, users
+from app.routers import auth, files, topics, users
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -19,6 +19,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(files.router)
+app.include_router(topics.router)
 
 
 @app.get("/")
