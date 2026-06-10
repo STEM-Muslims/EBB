@@ -31,6 +31,151 @@ export default function DashboardPage() {
   );
 }
 
+function EditUserForm({
+  user,
+  onSaved,
+  onCancel,
+}: {
+  user: AdminUser;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
+  const [email, setEmail] = useState(user.email);
+  const [isAdmin, setIsAdmin] = useState(user.is_admin);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function save() {
+    setLoading(true);
+    setError("");
+
+    try {
+      await usersApi.update(user.id, {
+        email,
+        is_admin: isAdmin,
+      });
+
+      onSaved();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className={styles.createForm}>
+      <h3>Edit User</h3>
+
+      <div className={styles.field}>
+        <label className={styles.label}>Email</label>
+        <input
+          className={styles.input}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
+
+      <label className={styles.checkboxRow}>
+        <input
+          type="checkbox"
+          checked={isAdmin}
+          onChange={(e) => setIsAdmin(e.target.checked)}
+        />
+        <span>Admin</span>
+      </label>
+
+      {error && <p className={styles.error}>{error}</p>}
+
+      <div className={styles.formActions}>
+        <button className={styles.btnPrimary} onClick={save} disabled={loading}>
+          Save
+        </button>
+
+        <button className={styles.btnGhost} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ResetPasswordForm({
+  user,
+  onSaved,
+  onCancel,
+}: {
+  user: AdminUser;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function save() {
+    if (password !== confirm) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      await usersApi.resetPassword(user.id, password);
+      onSaved();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className={styles.createForm}>
+      <h3>Reset Password</h3>
+
+      <p>{user.email}</p>
+
+      <div className={styles.fieldRow}>
+        <div className={styles.field}>
+          <label className={styles.label}>Password</label>
+          <input
+            className={styles.input}
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>Confirm</label>
+          <input
+            className={styles.input}
+            type="password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {error && <p className={styles.error}>{error}</p>}
+
+      <div className={styles.formActions}>
+        <button className={styles.btnPrimary} onClick={save} disabled={loading}>
+          Reset Password
+        </button>
+
+        <button className={styles.btnGhost} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Account section ─────────────────────── */
 function AccountSection({
   email,
@@ -154,6 +299,8 @@ function UsersSection() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [passwordUser, setPasswordUser] = useState<AdminUser | null>(null);
 
   async function load() {
     setLoading(true);
@@ -201,6 +348,7 @@ function UsersSection() {
               <th>Email</th>
               <th>Role</th>
               <th>Auth</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -217,9 +365,44 @@ function UsersSection() {
                 <td className={styles.muted}>
                   {u.google_id ? "Google" : "Password"}
                 </td>
+                <td>
+                  <button
+                    className={styles.btnGhost}
+                    onClick={() => setEditingUser(u)}
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    className={styles.btnGhost}
+                    onClick={() => setPasswordUser(u)}
+                  >
+                    Reset Password
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
+          {editingUser && (
+            <EditUserForm
+              user={editingUser}
+              onSaved={() => {
+                setEditingUser(null);
+                load();
+              }}
+              onCancel={() => setEditingUser(null)}
+            />
+          )}
+
+          {passwordUser && (
+            <ResetPasswordForm
+              user={passwordUser}
+              onSaved={() => {
+                setPasswordUser(null);
+              }}
+              onCancel={() => setPasswordUser(null)}
+            />
+          )}
         </table>
       )}
     </section>

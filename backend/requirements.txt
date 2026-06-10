@@ -2,7 +2,7 @@ alembic==1.18.4
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.13.0
-bcrypt==5.0.0
+bcrypt==4.0.1 #apparently bcrypt 5.0 doesnt work with passlib
 boto3==1.43.18
 botocore==1.43.18
 click==8.4.1

@@ -9,12 +9,24 @@ function authHeaders() {
   };
 }
 
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${url}`, {
     headers: authHeaders(),
     ...options,
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    let message = "Request failed";
+
+    try {
+      const data = await res.json();
+      message = data.detail ?? message;
+    } catch {
+      /* empty */
+    }
+
+    throw new Error(message);
+  }
   return res.json();
 }
 
@@ -40,4 +52,17 @@ export const usersApi = {
       method: "PATCH",
       body: JSON.stringify({ password }),
     }),
+
+  update: (id: number, data: { email: string; is_admin: boolean }) =>
+    request(`/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  resetPassword: (id: number, password: string) =>
+    request(`/users/${id}/password`, {
+      method: "PATCH",
+      body: JSON.stringify({ password }),
+    }),
 };
+
