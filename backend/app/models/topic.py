@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
+from math import nextafter
 
 from sqlmodel import Field, SQLModel
 
@@ -29,5 +30,21 @@ class Topic(SQLModel, table=True):
 
     is_active: bool = Field(default=True)
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    prev_id: int | None = Field(
+        default=None,
+        foreign_key="topic.id",
+        index=True,
+    )
+
+    next_id: int | None = Field(
+        default=None,
+        foreign_key="topic.id",
+        index=True,
+    )
+
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
