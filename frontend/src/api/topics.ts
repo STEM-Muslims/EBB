@@ -37,4 +37,13 @@ export const topicsApi = {
     request(`/topics/${id}`, {
       method: "DELETE",
     }),
+
+  reorder: (parent_id: number | null, topic_ids: number[]) =>
+    request<{ ok: boolean }>("/topics/reorder", {
+      method: "PATCH",
+      body: JSON.stringify({
+        parent_id,
+        topic_ids,
+      }),
+    }),
 };

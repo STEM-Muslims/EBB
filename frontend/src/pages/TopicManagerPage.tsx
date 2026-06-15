@@ -95,7 +95,7 @@ export default function TopicManagerPage() {
               nodes={tree}
               selectedId={selectedId}
               onSelect={handleSelect}
-              onRefresh={load}
+              onReorder={handleReorder}
             />
           )}
         </div>
@@ -146,6 +146,15 @@ export default function TopicManagerPage() {
       </section>
     </div>
   );
+
+  async function handleReorder(parentId: number | null, orderedIds: number[]) {
+    try {
+      await topicsApi.reorder(parentId, orderedIds);
+      await load();
+    } catch (e) {
+      console.error("Failed to reorder", e);
+    }
+  }
 }
 
 /* ── Breadcrumb ─────────────────────────── */
