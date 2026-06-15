@@ -30,3 +30,6 @@ coverage/
 #Claude
 CLAUDE.md
 .claude/
+
+.zed/
+pyrightconfig.json
