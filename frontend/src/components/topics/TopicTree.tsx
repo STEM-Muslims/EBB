@@ -69,19 +69,9 @@ function Level({
 
     const reordered = arrayMove(nodes, oldIndex, newIndex);
 
-    console.log("parentId:", parentId);
-    console.log(
-      "sending ids:",
-      reordered.map((n) => n.id),
-    );
-    console.log(
-      "all nodes at this level:",
-      nodes.map((n: Topic) => ({ id: n.id, name: n.name })),
-    );
-
     onReorder(
       parentId,
-      reordered.map((n) => n.id),
+      reordered.map((n: Topic) => n.id),
     );
   }
 
