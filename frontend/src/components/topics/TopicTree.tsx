@@ -67,8 +67,7 @@ function Level({
 
     if (oldIndex === -1 || newIndex === -1) return;
 
-    const reordered = arrayMove(nodes, oldIndex, newIndex);
-
+    const reordered = arrayMove(nodes, oldIndex, newIndex) as Topic[];
     onReorder(
       parentId,
       reordered.map((n: Topic) => n.id),
@@ -114,7 +113,7 @@ function SortableNode({
   open,
   level,
   onReorder,
-}: Any) {
+}: any) {
   const {
     attributes,
     listeners,
