@@ -1,10 +1,14 @@
-# React + FastAPI + Docker Project
+# EBB — Education Beyond Borders
 
-A full-stack application using:
+A full-stack web app for managing educational content (subjects, topics, videos),
+with an admin area behind Google OAuth or email/password sign-in.
 
-* React + TypeScript + Vite frontend
-* FastAPI backend
-* Docker + Docker Compose for development and deployment
+Tech stack:
+
+* React 19 + TypeScript + Vite + Tailwind CSS frontend (deployed to Netlify)
+* FastAPI + SQLModel + PostgreSQL + Alembic backend (deployed to Koyeb via Docker)
+* AWS S3 for file uploads
+* Docker + Docker Compose for local development
 
 ---
 
@@ -14,8 +18,16 @@ A full-stack application using:
 .
 ├── backend/
 │   ├── app/
-│   │   └── main.py
-│   ├── Dockerfile
+│   │   ├── core/config.py    # DATABASE_URL + AWS S3 client
+│   │   ├── models/           # User, Topic SQLModel tables
+│   │   ├── routers/          # auth, users, files, topics
+│   │   ├── config.py         # OAuth + JWT settings
+│   │   ├── db.py             # engine + session
+│   │   ├── dependencies.py   # get_db, require_admin
+│   │   └── main.py           # FastAPI app + CORS
+│   ├── alembic/              # DB migrations
+│   ├── seed_admin.py         # bootstrap the first admin
+│   ├── dockerfile
 │   └── requirements.txt
 │
 ├── frontend/
@@ -25,6 +37,9 @@ A full-stack application using:
 │   └── vite.config.ts
 │
 ├── docker-compose.yml
+├── netlify.toml              # frontend deploy config
+├── railway.toml              # backend deploy config (legacy)
+├── .env.example
 ├── .gitignore
 └── README.md
 ```
@@ -179,19 +194,21 @@ docker container prune
 
 # Environment Variables
 
-A future `.env` file can be used for:
+Copy the examples and fill them in:
 
-* Database URLs
-* API keys
-* Secrets
-* Environment configuration
-
-Example:
-
-```env
-BACKEND_PORT=8000
-FRONTEND_PORT=5173
+```bash
+cp .env.example .env                  # backend (Postgres, AWS S3, OAuth, JWT, URLs)
+cp frontend/.env.example frontend/.env # frontend (VITE_API_URL)
 ```
+
+Admin access is **database-driven** (the `is_admin` column on a user row), not an
+env whitelist. Seed the first admin on a fresh DB:
+
+```bash
+docker compose exec backend python seed_admin.py you@example.com
+```
+
+See `CLAUDE.md` for the full list of variables and what each one does.
 
 ---
 
@@ -232,24 +249,19 @@ Check:
 
 ## Backend Import Errors
 
-Ensure the backend Dockerfile uses:
+Ensure the backend Dockerfile runs migrations then starts the server:
 
 ```Dockerfile
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
 ```
 
 ---
 
-# Recommended Next Steps
+# Deployment
 
-* PostgreSQL integration
-* SQLAlchemy models
-* Alembic migrations
-* Authentication (JWT)
-* React Router
-* TailwindCSS
-* TanStack Query
-* Production deployment
+* **Frontend** → Netlify (config in `netlify.toml`: base `frontend`, build `npm run build`, publish `dist`)
+* **Backend** → Koyeb, Docker-based (`backend/dockerfile`); runs `alembic upgrade head` then `uvicorn` on startup
+* Set `BACKEND_URL` to the deployed backend URL and register `<BACKEND_URL>/auth/google/callback` as an authorized redirect URI in the Google Cloud Console
 
 ---
 
