@@ -9,7 +9,6 @@ function authHeaders() {
   };
 }
 
-
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${url}`, {
     headers: authHeaders(),
@@ -66,3 +65,10 @@ export const usersApi = {
     }),
 };
 
+export const authApi = {
+  login: (data: { email: string; password: string }) =>
+    request<{ access_token: string; token_type: string }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
