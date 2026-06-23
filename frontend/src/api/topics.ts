@@ -1,5 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL;
-
+import { API_URL as BASE_URL } from "../config";
 import type { Topic } from "../types/topics";
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${url}`, {

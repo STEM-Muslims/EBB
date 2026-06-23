@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { authApi } from "../../api/users";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import { API_URL } from "../../config";
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
