@@ -53,16 +53,6 @@ def upgrade() -> None:
         sa.column('created_at', sa.DateTime),
         sa.column('updated_at', sa.DateTime),
     )
-    topic = sa.table(
-        'topic',
-        sa.column('name', sa.String),
-        sa.column('level_type', sa.String),
-        sa.column('parent_id', sa.Integer),
-        sa.column('sort_order', sa.Integer),
-        sa.column('is_active', sa.Boolean),
-        sa.column('created_at', sa.DateTime),
-        sa.column('updated_at', sa.DateTime),
-    )
 
     # Insert only languages that don't already exist (name is unique).
     existing_languages = {
@@ -93,21 +83,17 @@ def upgrade() -> None:
             )
         ).fetchall()
     }
-    new_subjects = [
-        {
-            'name': name,
-            'level_type': 'SUBJECT',
-            'parent_id': None,
-            'sort_order': i,
-            'is_active': True,
-            'created_at': now,
-            'updated_at': now,
-        }
-        for i, name in enumerate(SUBJECTS)
-        if name not in existing_subjects
-    ]
-    if new_subjects:
-        op.bulk_insert(topic, new_subjects)
+    # level_type is a Postgres enum (leveltype); bind params arrive as VARCHAR
+    # and Postgres won't implicitly cast, so cast explicitly to ::leveltype.
+    insert_subject = sa.text(
+        "INSERT INTO topic "
+        "(name, level_type, parent_id, sort_order, is_active, created_at, updated_at) "
+        "VALUES (:name, 'SUBJECT'::leveltype, NULL, :sort_order, true, :now, :now)"
+    )
+    for i, name in enumerate(SUBJECTS):
+        if name in existing_subjects:
+            continue
+        bind.execute(insert_subject, {'name': name, 'sort_order': i, 'now': now})
 
 
 def downgrade() -> None:
