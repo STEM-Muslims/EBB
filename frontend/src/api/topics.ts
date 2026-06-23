@@ -18,6 +18,8 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 export const topicsApi = {
   getTree: () => request<Topic[]>("/topics/tree"),
 
+  getSubjects: () => request<Topic[]>("/topics/subjects"),
+
   getById: (id: number) => request<Topic>(`/topics/${id}`),
 
   create: (data: Partial<Topic>) =>

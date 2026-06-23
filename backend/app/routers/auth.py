@@ -12,8 +12,9 @@ from app.config import (
     JWT_SECRET,
 )
 from app.db import engine
-from app.dependencies import get_db, require_admin
+from app.dependencies import get_current_user, get_db
 from app.models.user import User
+from app.routers.users import build_user_profile
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from jose import jwt
@@ -86,7 +87,7 @@ async def google_callback(code: str = None, error: str = None):
 
     with Session(engine) as session:
         user = session.exec(select(User).where(User.email == email)).first()
-        if not user or not user.is_admin:
+        if not user:
             return RedirectResponse(f"{FRONTEND_URL}/admin/login?error=AccessDenied")
         if not user.google_id:
             user.google_id = google_id
@@ -99,8 +100,16 @@ async def google_callback(code: str = None, error: str = None):
 
 
 @router.get("/me")
-def get_me(email: str = Depends(require_admin)):
-    return {"email": email}
+def get_me(
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    profile = build_user_profile(current_user, session)
+    return {
+        "email": current_user.email,
+        "is_admin": bool(current_user.is_admin),
+        **profile,
+    }
 
 
 @router.post("/login")
@@ -110,8 +119,8 @@ def password_login(req: LoginRequest, session: Session = Depends(get_db)):
 
     user = session.exec(select(User).where(User.email == email)).first()
 
-    # Reject if user doesn't exist or isn't an admin
-    if not user or not user.is_admin:
+    # Reject if user doesn't exist (any provisioned user may log in)
+    if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     # Reject if user has no password set OR if the password doesn't match

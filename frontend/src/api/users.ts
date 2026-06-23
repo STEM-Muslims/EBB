@@ -30,18 +30,30 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+export type RoleType = "TEACHER" | "TRANSLATOR";
+
 export interface AdminUser {
   id: number;
   email: string;
   is_admin: boolean;
   google_id: string | null;
-  hashed_password: string | null;
+  roles: RoleType[];
+  teaching_subject_ids: number[];
+  language_ids: number[];
+}
+
+export interface UserProfileInput {
+  roles: RoleType[];
+  teaching_subject_ids: number[];
+  language_ids: number[];
 }
 
 export const usersApi = {
   getAll: () => request<AdminUser[]>("/users"),
 
-  create: (data: { email: string; password?: string; is_admin: boolean }) =>
+  create: (
+    data: { email: string; password?: string; is_admin: boolean } & UserProfileInput,
+  ) =>
     request<AdminUser>("/users", {
       method: "POST",
       body: JSON.stringify(data),
@@ -53,7 +65,10 @@ export const usersApi = {
       body: JSON.stringify({ password }),
     }),
 
-  update: (id: number, data: { email: string; is_admin: boolean }) =>
+  update: (
+    id: number,
+    data: { email: string; is_admin: boolean } & UserProfileInput,
+  ) =>
     request(`/users/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
