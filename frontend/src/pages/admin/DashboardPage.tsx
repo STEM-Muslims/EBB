@@ -1,7 +1,91 @@
 import { useEffect, useState } from "react";
 import { useAdmin } from "../../hooks/useAdmin";
-import { usersApi, type AdminUser } from "../../api/users";
+import { usersApi, type AdminUser, type RoleType } from "../../api/users";
+import { topicsApi } from "../../api/topics";
+import { languagesApi, type Language } from "../../api/languages";
+import type { Topic } from "../../types/topics";
 import styles from "./DashboardPage.module.css";
+
+const ROLE_OPTIONS: { value: RoleType; label: string }[] = [
+  { value: "TEACHER", label: "Teacher" },
+  { value: "TRANSLATOR", label: "Translator" },
+];
+
+function RoleCheckboxes({
+  selected,
+  onChange,
+}: {
+  selected: RoleType[];
+  onChange: (roles: RoleType[]) => void;
+}) {
+  function toggle(role: RoleType) {
+    onChange(
+      selected.includes(role)
+        ? selected.filter((r) => r !== role)
+        : [...selected, role],
+    );
+  }
+
+  return (
+    <div className={styles.field}>
+      <label className={styles.label}>Roles</label>
+      <div className={styles.checkboxGroup}>
+        {ROLE_OPTIONS.map((opt) => (
+          <label key={opt.value} className={styles.checkboxRow}>
+            <input
+              type="checkbox"
+              checked={selected.includes(opt.value)}
+              onChange={() => toggle(opt.value)}
+            />
+            <span>{opt.label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MultiSelect({
+  label,
+  options,
+  selected,
+  onChange,
+}: {
+  label: string;
+  options: { id: number; name: string }[];
+  selected: number[];
+  onChange: (ids: number[]) => void;
+}) {
+  function toggle(id: number) {
+    onChange(
+      selected.includes(id)
+        ? selected.filter((x) => x !== id)
+        : [...selected, id],
+    );
+  }
+
+  return (
+    <div className={styles.field}>
+      <label className={styles.label}>{label}</label>
+      <div className={styles.multiSelect}>
+        {options.length === 0 ? (
+          <span className={styles.muted}>None available</span>
+        ) : (
+          options.map((o) => (
+            <label key={o.id} className={styles.checkboxRow}>
+              <input
+                type="checkbox"
+                checked={selected.includes(o.id)}
+                onChange={() => toggle(o.id)}
+              />
+              <span>{o.name}</span>
+            </label>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { email, loading, logout } = useAdmin();
@@ -33,15 +117,26 @@ export default function DashboardPage() {
 
 function EditUserForm({
   user,
+  subjects,
+  languages,
   onSaved,
   onCancel,
 }: {
   user: AdminUser;
+  subjects: Topic[];
+  languages: Language[];
   onSaved: () => void;
   onCancel: () => void;
 }) {
   const [email, setEmail] = useState(user.email);
   const [isAdmin, setIsAdmin] = useState(user.is_admin);
+  const [roles, setRoles] = useState<RoleType[]>(user.roles ?? []);
+  const [teachingSubjectIds, setTeachingSubjectIds] = useState<number[]>(
+    user.teaching_subject_ids ?? [],
+  );
+  const [languageIds, setLanguageIds] = useState<number[]>(
+    user.language_ids ?? [],
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -53,6 +148,9 @@ function EditUserForm({
       await usersApi.update(user.id, {
         email,
         is_admin: isAdmin,
+        roles,
+        teaching_subject_ids: roles.includes("TEACHER") ? teachingSubjectIds : [],
+        language_ids: roles.includes("TRANSLATOR") ? languageIds : [],
       });
 
       onSaved();
@@ -84,6 +182,26 @@ function EditUserForm({
         />
         <span>Admin</span>
       </label>
+
+      <RoleCheckboxes selected={roles} onChange={setRoles} />
+
+      {roles.includes("TEACHER") && (
+        <MultiSelect
+          label="Subjects they can teach"
+          options={subjects}
+          selected={teachingSubjectIds}
+          onChange={setTeachingSubjectIds}
+        />
+      )}
+
+      {roles.includes("TRANSLATOR") && (
+        <MultiSelect
+          label="Languages they can translate into"
+          options={languages}
+          selected={languageIds}
+          onChange={setLanguageIds}
+        />
+      )}
 
       {error && <p className={styles.error}>{error}</p>}
 
@@ -297,6 +415,8 @@ function AccountSection({
 /* ── Users section ───────────────────────── */
 function UsersSection() {
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [subjects, setSubjects] = useState<Topic[]>([]);
+  const [languages, setLanguages] = useState<Language[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
@@ -316,6 +436,14 @@ function UsersSection() {
 
   useEffect(() => {
     load();
+    topicsApi
+      .getSubjects()
+      .then(setSubjects)
+      .catch(() => console.error("Failed to load subjects"));
+    languagesApi
+      .getAll()
+      .then(setLanguages)
+      .catch(() => console.error("Failed to load languages"));
   }, []);
 
   return (
@@ -332,6 +460,8 @@ function UsersSection() {
 
       {showForm && (
         <CreateUserForm
+          subjects={subjects}
+          languages={languages}
           onCreated={() => {
             setShowForm(false);
             load();
@@ -356,11 +486,26 @@ function UsersSection() {
               <tr key={u.id}>
                 <td>{u.email}</td>
                 <td>
-                  <span
-                    className={`${styles.badge} ${u.is_admin ? styles.badgeAdmin : styles.badgeUser}`}
-                  >
-                    {u.is_admin ? "Admin" : "User"}
-                  </span>
+                  <div className={styles.roleCell}>
+                    {u.is_admin && (
+                      <span className={`${styles.badge} ${styles.badgeAdmin}`}>
+                        Admin
+                      </span>
+                    )}
+                    {u.roles?.map((r) => (
+                      <span
+                        key={r}
+                        className={`${styles.badge} ${styles.badgeRole}`}
+                      >
+                        {r === "TEACHER" ? "Teacher" : "Translator"}
+                      </span>
+                    ))}
+                    {!u.is_admin && (u.roles?.length ?? 0) === 0 && (
+                      <span className={`${styles.badge} ${styles.badgeUser}`}>
+                        User
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className={styles.muted}>
                   {u.google_id ? "Google" : "Password"}
@@ -386,6 +531,8 @@ function UsersSection() {
           {editingUser && (
             <EditUserForm
               user={editingUser}
+              subjects={subjects}
+              languages={languages}
               onSaved={() => {
                 setEditingUser(null);
                 load();
@@ -410,10 +557,21 @@ function UsersSection() {
 }
 
 /* ── Create user form ────────────────────── */
-function CreateUserForm({ onCreated }: { onCreated: () => void }) {
+function CreateUserForm({
+  subjects,
+  languages,
+  onCreated,
+}: {
+  subjects: Topic[];
+  languages: Language[];
+  onCreated: () => void;
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [roles, setRoles] = useState<RoleType[]>([]);
+  const [teachingSubjectIds, setTeachingSubjectIds] = useState<number[]>([]);
+  const [languageIds, setLanguageIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -429,6 +587,9 @@ function CreateUserForm({ onCreated }: { onCreated: () => void }) {
         email: email.trim(),
         password: password || undefined,
         is_admin: isAdmin,
+        roles,
+        teaching_subject_ids: roles.includes("TEACHER") ? teachingSubjectIds : [],
+        language_ids: roles.includes("TRANSLATOR") ? languageIds : [],
       });
       onCreated();
     } catch (e: any) {
@@ -474,6 +635,26 @@ function CreateUserForm({ onCreated }: { onCreated: () => void }) {
         />
         <span>Grant admin access</span>
       </label>
+
+      <RoleCheckboxes selected={roles} onChange={setRoles} />
+
+      {roles.includes("TEACHER") && (
+        <MultiSelect
+          label="Subjects they can teach"
+          options={subjects}
+          selected={teachingSubjectIds}
+          onChange={setTeachingSubjectIds}
+        />
+      )}
+
+      {roles.includes("TRANSLATOR") && (
+        <MultiSelect
+          label="Languages they can translate into"
+          options={languages}
+          selected={languageIds}
+          onChange={setLanguageIds}
+        />
+      )}
 
       {error && <p className={styles.error}>{error}</p>}
 

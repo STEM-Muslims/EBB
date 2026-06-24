@@ -6,9 +6,9 @@ export default function AdminRoute({
 }: {
   children: React.ReactNode;
 }) {
-  const { email, loading } = useAdmin();
+  const { email, isAdmin, loading } = useAdmin();
 
-  if (loading) return null; 
-  if (!email) return <Navigate to="/admin/login" replace />;
+  if (loading) return null;
+  if (!email || !isAdmin) return <Navigate to="/admin/login" replace />;
   return <>{children}</>;
 }

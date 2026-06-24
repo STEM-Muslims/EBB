@@ -33,3 +33,6 @@ backend/youtube_client_secret.json
 #Claude
 CLAUDE.md
 .claude/
+
+.zed/
+pyrightconfig.json

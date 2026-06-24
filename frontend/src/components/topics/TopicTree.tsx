@@ -2,100 +2,178 @@ import { useState } from "react";
 import type { Topic } from "../../types/topics";
 import styles from "./TopicTree.module.css";
 
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  useSortable,
+  arrayMove,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+
+import { CSS } from "@dnd-kit/utilities";
+
 interface Props {
   nodes: Topic[];
   selectedId: number | null;
   onSelect: (topic: Topic) => void;
-  onRefresh: () => void;
+  onReorder: (parentId: number | null, orderedIds: number[]) => void;
 }
 
-const LEVEL_BADGE: Record<string, string> = {
-  SUBJECT: "S",
-  TOPIC: "T",
-  VIDEO: "V",
-};
-
-export default function TopicTree({ nodes, selectedId, onSelect }: Props) {
+export default function TopicTree({
+  nodes,
+  selectedId,
+  onSelect,
+  onReorder,
+}: Props) {
   return (
     <div className={styles.tree}>
-      {nodes.length === 0 ? (
-        <p className={styles.empty}>No subjects yet.</p>
-      ) : (
-        nodes.map((node) => (
-          <TreeNode
-            key={node.id}
-            node={node}
-            selectedId={selectedId}
-            onSelect={onSelect}
-            level={0}
-          />
-        ))
-      )}
+      <Level
+        nodes={nodes}
+        selectedId={selectedId}
+        onSelect={onSelect}
+        onReorder={onReorder}
+        parentId={null}
+        level={0}
+      />
     </div>
   );
 }
 
-function TreeNode({
+function Level({
+  nodes,
+  selectedId,
+  onSelect,
+  onReorder,
+  parentId,
+  level,
+}: any) {
+  const [openMap, setOpenMap] = useState<Record<number, boolean>>({});
+
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  function handleDragEnd(event: any) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = nodes.findIndex((n: Topic) => n.id === active.id);
+    const newIndex = nodes.findIndex((n: Topic) => n.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(nodes, oldIndex, newIndex) as Topic[];
+    onReorder(
+      parentId,
+      reordered.map((n: Topic) => n.id),
+    );
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={nodes.map((n: Topic) => n.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div>
+          {nodes.map((node: Topic) => (
+            <SortableNode
+              key={node.id}
+              node={node}
+              selectedId={selectedId}
+              onSelect={onSelect}
+              onToggle={() =>
+                setOpenMap((m) => ({ ...m, [node.id]: !m[node.id] }))
+              }
+              open={openMap[node.id] ?? level === 0}
+              level={level}
+              onReorder={onReorder}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+function SortableNode({
   node,
   selectedId,
   onSelect,
+  onToggle,
+  open,
   level,
-}: {
-  node: Topic;
-  selectedId: number | null;
-  onSelect: (t: Topic) => void;
-  level: number;
-}) {
-  const [open, setOpen] = useState(level === 0);
+  onReorder,
+}: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: node.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    paddingLeft: level * 16,
+  };
+
   const children = node.children ?? [];
-  const hasChildren = children.length > 0;
-  const isSelected = node.id === selectedId;
 
   return (
-    <div className={styles.nodeWrapper} style={{ paddingLeft: level * 16 }}>
+    <div>
       <div
-        className={`${styles.node} ${isSelected ? styles.nodeSelected : ""}`}
+        ref={setNodeRef}
+        style={style}
+        className={`${styles.node}`}
         onClick={() => onSelect(node)}
       >
+        <button {...listeners} {...attributes} className={styles.dragHandle}>
+          ⠿
+        </button>
+
         <button
           className={styles.chevron}
           onClick={(e) => {
             e.stopPropagation();
-            if (hasChildren) setOpen((o) => !o);
+            onToggle();
           }}
-          aria-label={open ? "Collapse" : "Expand"}
-          style={{ visibility: hasChildren ? "visible" : "hidden" }}
         >
           <span
             className={styles.chevronIcon}
-            style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)" }}
+            style={{
+              transform: open ? "rotate(90deg)" : "rotate(0deg)",
+            }}
           >
             ▶
           </span>
         </button>
 
-        <span
-          className={`${styles.badge} ${styles[`badge${node.level_type}`]}`}
-        >
-          {LEVEL_BADGE[node.level_type] ?? "?"}
-        </span>
-
-        <span className={styles.nodeName}>
-          {node.name || <em className={styles.unnamed}>Unnamed</em>}
-        </span>
+        <span className={styles.nodeName}>{node.name}</span>
       </div>
 
-      {open && hasChildren && (
+      {open && children.length > 0 && (
         <div>
-          {children.map((child) => (
-            <TreeNode
-              key={child.id}
-              node={child}
-              selectedId={selectedId}
-              onSelect={onSelect}
-              level={level + 1}
-            />
-          ))}
+          <Level
+            nodes={children}
+            selectedId={selectedId}
+            onSelect={onSelect}
+            onReorder={onReorder}
+            parentId={node.id}
+            level={level + 1}
+          />
         </div>
       )}
     </div>

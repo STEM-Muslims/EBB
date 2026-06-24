@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import { API_URL as BASE_URL } from "../config";
+
 const TOKEN_KEY = "admin_token";
 
 function authHeaders() {
@@ -8,7 +9,6 @@ function authHeaders() {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
-
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${url}`, {
@@ -30,18 +30,30 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+export type RoleType = "TEACHER" | "TRANSLATOR";
+
 export interface AdminUser {
   id: number;
   email: string;
   is_admin: boolean;
   google_id: string | null;
-  hashed_password: string | null;
+  roles: RoleType[];
+  teaching_subject_ids: number[];
+  language_ids: number[];
+}
+
+export interface UserProfileInput {
+  roles: RoleType[];
+  teaching_subject_ids: number[];
+  language_ids: number[];
 }
 
 export const usersApi = {
   getAll: () => request<AdminUser[]>("/users"),
 
-  create: (data: { email: string; password?: string; is_admin: boolean }) =>
+  create: (
+    data: { email: string; password?: string; is_admin: boolean } & UserProfileInput,
+  ) =>
     request<AdminUser>("/users", {
       method: "POST",
       body: JSON.stringify(data),
@@ -53,7 +65,10 @@ export const usersApi = {
       body: JSON.stringify({ password }),
     }),
 
-  update: (id: number, data: { email: string; is_admin: boolean }) =>
+  update: (
+    id: number,
+    data: { email: string; is_admin: boolean } & UserProfileInput,
+  ) =>
     request(`/users/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
@@ -66,3 +81,10 @@ export const usersApi = {
     }),
 };
 
+export const authApi = {
+  login: (data: { email: string; password: string }) =>
+    request<{ access_token: string; token_type: string }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};

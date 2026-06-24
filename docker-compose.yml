@@ -24,6 +24,7 @@ services:
   db:
     image: postgres:16
     environment:
+      # These are required ONLY for the Postgres image to set itself up locally
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

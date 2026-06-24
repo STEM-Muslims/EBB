@@ -1,5 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL;
-
+import { API_URL as BASE_URL } from "../config";
 import type { Topic } from "../types/topics";
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${url}`, {
@@ -19,6 +18,8 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 export const topicsApi = {
   getTree: () => request<Topic[]>("/topics/tree"),
 
+  getSubjects: () => request<Topic[]>("/topics/subjects"),
+
   getById: (id: number) => request<Topic>(`/topics/${id}`),
 
   create: (data: Partial<Topic>) =>
@@ -36,5 +37,14 @@ export const topicsApi = {
   archive: (id: number) =>
     request(`/topics/${id}`, {
       method: "DELETE",
+    }),
+
+  reorder: (parent_id: number | null, topic_ids: number[]) =>
+    request<{ ok: boolean }>("/topics/reorder", {
+      method: "PATCH",
+      body: JSON.stringify({
+        parent_id,
+        topic_ids,
+      }),
     }),
 };
