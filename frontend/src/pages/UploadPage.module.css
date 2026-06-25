@@ -151,3 +151,38 @@
     color: var(--text-primary);
     word-break: break-all;
 }
+
+/* ── Per-step results ─────────────────── */
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.step {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12.5px;
+}
+
+.stepIcon {
+    font-size: 12px;
+    width: 14px;
+    flex-shrink: 0;
+}
+
+.stepName {
+    font-weight: 500;
+    color: var(--text-primary);
+    min-width: 72px;
+}
+
+.stepOk {
+    color: var(--success);
+}
+
+.stepFail {
+    color: var(--danger);
+    word-break: break-word;
+}
