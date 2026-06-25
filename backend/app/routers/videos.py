@@ -4,7 +4,8 @@ import uuid
 
 from app.core.config import AWS_REGION, S3_BUCKET_NAME, s3_client
 from app.core.youtube import set_video_privacy, upload_video
-from app.dependencies import get_db, require_admin
+from app.dependencies import get_current_user, get_db, require_admin
+from app.models.user import User
 from app.models.video import Video, VideoStatus
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlmodel import Session, col, select
@@ -130,31 +131,44 @@ async def upload_video_pipeline(
     }
 
 
-@router.get("", response_model=list[Video])
+@router.get("")
 def list_videos(
     session: Session = Depends(get_db),
-    _: str = Depends(require_admin),
+    user: User = Depends(get_current_user),
 ):
     """All uploaded videos, newest first. The frontend filters to the rows whose
-    `uploaded_by` matches the current user to decide what they can manage."""
-    return session.exec(select(Video).order_by(col(Video.created_at).desc())).all()
+    `uploaded_by` matches the current user to decide what they can manage.
+
+    The S3 location (`s3_key`/`s3_url`) is admin-only — it's stripped for
+    non-admin users so the raw storage link is never exposed to them, even if
+    this endpoint is later opened to non-admin roles."""
+    videos = session.exec(select(Video).order_by(col(Video.created_at).desc())).all()
+
+    result = []
+    for video in videos:
+        data = video.model_dump()
+        if not user.is_admin:
+            data["s3_key"] = None
+            data["s3_url"] = None
+        result.append(data)
+    return result
 
 
 @router.delete("/{video_id}")
 def delete_video(
     video_id: int,
     session: Session = Depends(get_db),
-    email: str = Depends(require_admin),
+    user: User = Depends(get_current_user),
 ):
-    """Take a video back down: delete it from S3, unlist it on YouTube, and remove
-    the database row. Only the admin who uploaded it may do this. Returns a
-    per-step breakdown so partial failures (e.g. the object already gone from S3)
-    are visible rather than silently swallowed."""
+    """Take a video back down: delete it from S3, make it private on YouTube, and
+    remove the database row. The uploader may remove their own video; admins may
+    remove any. Returns a per-step breakdown so partial failures (e.g. the object
+    already gone from S3) are visible rather than silently swallowed."""
     video = session.get(Video, video_id)
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
 
-    if video.uploaded_by != email:
+    if not user.is_admin and video.uploaded_by != user.email:
         raise HTTPException(
             status_code=403, detail="You can only remove videos you uploaded"
         )

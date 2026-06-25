@@ -4,7 +4,7 @@ import { useAdmin } from "../hooks/useAdmin";
 import styles from "./VideoManagerPage.module.css";
 
 export default function VideoManagerPage() {
-  const { email, loading: authLoading } = useAdmin();
+  const { email, isAdmin, loading: authLoading } = useAdmin();
 
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +119,7 @@ export default function VideoManagerPage() {
                         YouTube
                       </a>
                     )}
-                    {v.s3_url && (
+                    {isAdmin && v.s3_url && (
                       <a href={v.s3_url} target="_blank" rel="noreferrer">
                         S3
                       </a>
@@ -130,10 +130,10 @@ export default function VideoManagerPage() {
                 <button
                   className={styles.btnDanger}
                   onClick={() => remove(v)}
-                  disabled={!owned || removingId === v.id}
+                  disabled={(!owned && !isAdmin) || removingId === v.id}
                   title={
-                    owned
-                      ? "Remove from S3, unlist on YouTube, delete record"
+                    owned || isAdmin
+                      ? "Remove from S3, make private on YouTube, delete record"
                       : "Only the uploader can remove this video"
                   }
                 >
