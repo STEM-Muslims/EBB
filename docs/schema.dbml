@@ -1,184 +1,154 @@
 // schema.dbml
-// draft schema for stemm_ebb_prep
-// SQLModel (Python) is the runtime source of truth — this file is design/docs only
-// visualise via dbdiagram.io
+// ============================================================
+// SHOWCASE / DOCS ONLY — NOT FUNCTIONAL
+// ------------------------------------------------------------
+// This is a hand-maintained diagram of the EBB database, kept
+// here purely to visualise the schema (paste into dbdiagram.io).
+// Nothing reads this file at build or run time.
+//
+// The SQLModel classes in backend/app/models/ are the single
+// source of truth; the live schema is created/migrated by
+// Alembic (backend/alembic/versions/). If the models change,
+// update this file by hand — it will not drift on its own and
+// it is not validated against anything.
+// ============================================================
 
 // ============================================================
-// CONTENT HIERARCHY (4 levels)
+// CONTENT HIERARCHY
+// ------------------------------------------------------------
+// A single self-referential `topic` table holds the whole tree.
+// `level_type` distinguishes the 3 levels; `parent_id` builds
+// the tree; `prev_id`/`next_id` are a doubly-linked list that
+// orders siblings (with `sort_order` as a legacy fallback).
+// Source: backend/app/models/topic.py
 // ============================================================
 
-Table subjects {
-  id    int          [pk, increment]
-  name  varchar(100) [not null, note: 'top-level domain e.g. Mathematics, Physics']
-
-  Note: 'level 1 — broad academic subject'
-}
-
-Table topics {  
+Table topic {
   id          int          [pk, increment]
-  subject_id  int          [ref: > subjects.id, not null]
-  name        varchar(150) [not null, note: 'e.g. Pure, Statistics, Mechanics']
-
-  Note: 'level 2 — major area within a subject'
-}
-
-Table sub_topics {
-  id        int          [pk, increment]
-  topic_id  int          [ref: > topics.id, not null]
-  name      varchar(150) [not null, note: 'a chapter, e.g. Calculus, Trigonometry']
-
-  Note: 'level 3 — chapter-level grouping'
-}
-
-Table lessons {
-  id            int          [pk, increment]
-  sub_topic_id  int          [ref: > sub_topics.id, not null]
-  name          varchar(200) [not null, note: 'e.g. Chain Rule, Product Rule']
-
-  Note {
-    '''
-    level 4 — the actual video-level topic.
-    each entry maps to one video per language.
-    '''
-  }
-}
-
-// ============================================================
-// USERS & ROLES
-// ============================================================
-
-Table users {
-  id          int          [pk, increment]
-  email       varchar(255) [not null, unique, note: 'login identifier']
-  name        varchar(150) [not null]
-  password    varchar(255) [not null, note: 'bcrypt/argon2 hash — never plaintext']
+  name        varchar      [not null, note: 'display name']
+  level_type  varchar      [not null, note: "enum LevelType: 'SUBJECT' | 'TOPIC' | 'VIDEO'"]
+  parent_id   int          [ref: > topic.id, null, note: 'NULL for SUBJECT (top level)']
+  sort_order  int          [not null, default: 0, note: 'legacy fallback ordering']
+  notes       text         [null]
+  is_active   boolean      [not null, default: true, note: 'soft-delete flag']
+  prev_id     int          [ref: > topic.id, null, note: 'linked-list: previous sibling']
+  next_id     int          [ref: > topic.id, null, note: 'linked-list: next sibling']
   created_at  timestamp    [not null, default: `now()`]
-
-  Note: 'all platform accounts — tutors, translators, admins, viewers'
-}
-
-Table roles {
-  id    int         [pk, increment]
-  name  varchar(50) [not null, unique, note: 'e.g. tutor, translator, admin, viewer, reviewer']
-
-  Note: 'defines all possible roles on the platform'
-}
-
-Table user_roles {
-  user_id  int [ref: > users.id]
-  role_id  int [ref: > roles.id]
-
-  indexes {
-    (user_id, role_id) [pk]
-  }
-
-  Note: 'M:N — a user can hold multiple roles (e.g. tutor AND translator)'
-}
-
-Table languages {
-  id        int         [pk, increment]
-  language  varchar(50) [not null, unique, note: 'e.g. English, Arabic, Somali']
-
-  Note: 'supported languages for video translation'
-}
-
-Table translators {
-  id           int         [pk, increment]
-  user_id      int         [ref: > users.id, not null]
-  language_id  int         [ref: > languages.id, not null]
-  proficiency  varchar(20) [not null, note: 'enum: native | fluent | intermediate']
+  updated_at  timestamp    [not null, default: `now()`]
 
   Note {
     '''
-    links a user to a language they can translate into, with skill level.
-    a user can appear here multiple times (one row per language).
+    self-referential tree, 3 levels via level_type:
+      SUBJECT (no parent) -> TOPIC -> VIDEO (leaf).
+    sibling order is a doubly-linked list (prev_id/next_id).
+    deletes are soft (is_active = false).
     '''
   }
 }
 
 // ============================================================
-// VIDEOS & TRANSLATION
+// USERS, ROLES & AUTH
+// ------------------------------------------------------------
+// Admin access is the `is_admin` column (no email whitelist).
+// Sign-in is Google OAuth (google_id) or email/password
+// (hashed_password). Roles are an enum, granted per user.
+// Source: backend/app/models/user.py, role.py
 // ============================================================
 
-Table videos {
+Table user {
+  id               int          [pk, increment]
+  email            varchar      [not null, unique, note: 'login identifier']
+  hashed_password  varchar      [null, note: 'bcrypt hash — null for Google-only accounts']
+  google_id        varchar      [null, note: 'Google OAuth subject, set on first login']
+  is_admin         boolean      [default: false, note: 'sole source of admin access']
+
+  Note: 'every provisioned account; admins, teachers, translators'
+}
+
+Table userrole {
+  id       int     [pk, increment]
+  user_id  int     [ref: > user.id, not null]
+  role     varchar [not null, note: "enum RoleType: 'TEACHER' | 'TRANSLATOR'"]
+
+  indexes {
+    (user_id, role) [unique, name: 'uq_user_role']
+  }
+
+  Note: 'M:N — a user may hold multiple roles (e.g. TEACHER and TRANSLATOR)'
+}
+
+// ============================================================
+// LANGUAGES & TRANSLATOR / TEACHER LINKS
+// ------------------------------------------------------------
+// Source: backend/app/models/language.py, user_language.py,
+//         user_subject.py
+// ============================================================
+
+Table language {
+  id          int          [pk, increment]
+  name        varchar      [not null, unique, note: 'e.g. English, Arabic, Somali']
+  code        varchar      [null, note: 'e.g. en, ar, so']
+  is_active   boolean      [not null, default: true, note: 'soft-delete flag']
+  created_at  timestamp    [not null, default: `now()`]
+  updated_at  timestamp    [not null, default: `now()`]
+
+  Note: 'supported translation languages'
+}
+
+Table userlanguage {
+  id           int [pk, increment]
+  user_id      int [ref: > user.id, not null]
+  language_id  int [ref: > language.id, not null]
+
+  indexes {
+    (user_id, language_id) [unique, name: 'uq_user_language']
+  }
+
+  Note: 'M:N — links a TRANSLATOR to the languages they translate into'
+}
+
+Table userteachingsubject {
+  id        int [pk, increment]
+  user_id   int [ref: > user.id, not null]
+  topic_id  int [ref: > topic.id, not null, note: 'a SUBJECT-level topic']
+
+  indexes {
+    (user_id, topic_id) [unique, name: 'uq_user_teaching_subject']
+  }
+
+  Note: 'M:N — links a TEACHER to the SUBJECT topics they teach'
+}
+
+// ============================================================
+// VIDEOS
+// ------------------------------------------------------------
+// One upload is published to S3 + YouTube and recorded here.
+// NOTE: in the current schema a video is NOT foreign-keyed to a
+// topic — `uploaded_by` is the admin's email, and status tracks
+// how far the S3/YouTube pipeline got.
+// Source: backend/app/models/video.py
+// ============================================================
+
+Table video {
   id                int          [pk, increment]
-  title             varchar(200) [not null]
-  lesson_id  int          [ref: > lessons.id, not null, note: 'the level-4 topic this video covers']
-  tutor_id          int          [ref: > users.id, not null, note: 'user who recorded the video']
-  date_time         timestamp    [not null, default: `now()`]
-
-  // meta_data (broken out from the sketch)
-  descrip    text
-  size       bigint       [note: 'file size in bytes']
-  url        varchar(500) [note: 'playback URL or CDN link']
-  s3_key     varchar(500) [note: 'object key inside the S3 bucket']
-  s3_bucket  varchar(100) [note: 'name of the S3 bucket holding the file']
-
-  Note {
-    '''
-    stores uploaded video content produced by stemm.
-    physical file lives in S3 — this table only holds metadata.
-    one logical video per (lesson, language).
-    '''
-  }
-}
-
-Table translated_by {
-  translator_id  int [ref: > translators.id]
-  video_id       int [ref: > videos.id]
-
-  indexes {
-    (translator_id, video_id) [pk]
-  }
-
-  Note: 'M:N — a video can have multiple translators, a translator handles many videos'
-}
-
-// ============================================================
-// CHARITIES
-// ============================================================
-
-Table charities {
-  id    int          [pk, increment]
-  name  varchar(150) [not null]
-
-  Note: 'partner charities that stemm distributes video content to'
-}
-
-Table sent_to {
-  video_id    int [ref: > videos.id]
-  charity_id  int [ref: > charities.id]
-  sent_at     timestamp [default: `now()`, note: 'when this video was distributed to this charity']
-
-  indexes {
-    (video_id, charity_id) [pk]
-  }
-
-  Note: 'M:N — a video can be sent to many charities; a charity receives many videos'
-}
-
-// ============================================================
-// WORKFLOW (jobs & assignments)
-// ============================================================
-
-Table jobs {
-  id        int          [pk, increment]
-  job_name  varchar(100) [not null, note: 'e.g. record, arabic_translator, somali_translator']
-
-  Note: 'defines a type of task that can be assigned to a user'
-}
-
-Table assignments {
-  id                int [pk, increment]
-  lesson_id  int [ref: > lessons
-.id, not null, note: 'the topic the job is for']
-  user_id           int [ref: > users.id, not null, note: 'who is assigned']
-  job_id            int [ref: > jobs.id, not null, note: 'what kind of work']
+  title             varchar      [not null]
+  description       text         [not null, default: '']
+  privacy_status    varchar      [not null, default: 'unlisted', note: 'YouTube privacy']
+  s3_key            varchar      [null, note: 'object key inside the S3 bucket']
+  s3_url            varchar      [null, note: 'raw S3 link — hidden from non-admins in API']
+  youtube_video_id  varchar      [null]
+  youtube_url       varchar      [null]
+  uploaded_by       varchar      [null, note: "uploader's email; only they (or an admin) can remove it"]
+  status            varchar      [not null, default: 'PENDING', note: "enum VideoStatus: 'PENDING' | 'S3_UPLOADED' | 'COMPLETED' | 'FAILED'"]
+  error             text         [null, note: 'human-readable summary of any failed step']
+  created_at        timestamp    [not null, default: `now()`]
+  updated_at        timestamp    [not null, default: `now()`]
 
   Note {
     '''
-    workflow tracking — assigns a user a job for a topic.
-    e.g. user 12 is assigned "arabic_translator" for lesson 45.
+    physical file lives in S3 and on YouTube — this table holds
+    metadata + pipeline status. each upload is independent: a
+    failure in one destination does not block the others.
     '''
   }
 }
