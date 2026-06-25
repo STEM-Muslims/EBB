@@ -27,7 +27,9 @@ import sys
 from dotenv import load_dotenv
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+# Full "youtube" scope so the token can both upload videos AND update them
+# (e.g. unlist a video when it's removed). "youtube.upload" alone cannot update.
+SCOPES = ["https://www.googleapis.com/auth/youtube"]
 
 
 def main() -> None:

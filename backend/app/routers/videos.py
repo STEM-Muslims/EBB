@@ -3,11 +3,11 @@ import tempfile
 import uuid
 
 from app.core.config import AWS_REGION, S3_BUCKET_NAME, s3_client
-from app.core.youtube import upload_video
+from app.core.youtube import set_video_privacy, upload_video
 from app.dependencies import get_db, require_admin
 from app.models.video import Video, VideoStatus
-from fastapi import APIRouter, Depends, File, Form, UploadFile
-from sqlmodel import Session
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlmodel import Session, col, select
 
 router = APIRouter(prefix="/videos", tags=["videos"])
 
@@ -27,7 +27,7 @@ async def upload_video_pipeline(
     description: str = Form(""),
     privacy_status: str = Form("unlisted"),
     session: Session = Depends(get_db),
-    _: str = Depends(require_admin),
+    email: str = Depends(require_admin),
 ):
     """Upload a single video file and publish it to S3 + YouTube, recording the
     result in the database. Always returns 200 with a per-step breakdown so the
@@ -103,6 +103,7 @@ async def upload_video_pipeline(
             s3_url=s3_url if steps["s3"]["success"] else None,
             youtube_video_id=youtube_video_id,
             youtube_url=youtube_url,
+            uploaded_by=email,
             status=status,
             error=error_summary,
         )
@@ -126,4 +127,82 @@ async def upload_video_pipeline(
         ),
         "steps": steps,
         "video": video,
+    }
+
+
+@router.get("", response_model=list[Video])
+def list_videos(
+    session: Session = Depends(get_db),
+    _: str = Depends(require_admin),
+):
+    """All uploaded videos, newest first. The frontend filters to the rows whose
+    `uploaded_by` matches the current user to decide what they can manage."""
+    return session.exec(select(Video).order_by(col(Video.created_at).desc())).all()
+
+
+@router.delete("/{video_id}")
+def delete_video(
+    video_id: int,
+    session: Session = Depends(get_db),
+    email: str = Depends(require_admin),
+):
+    """Take a video back down: delete it from S3, unlist it on YouTube, and remove
+    the database row. Only the admin who uploaded it may do this. Returns a
+    per-step breakdown so partial failures (e.g. the object already gone from S3)
+    are visible rather than silently swallowed."""
+    video = session.get(Video, video_id)
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    if video.uploaded_by != email:
+        raise HTTPException(
+            status_code=403, detail="You can only remove videos you uploaded"
+        )
+
+    steps = {
+        "s3": _step(False, "not attempted"),
+        "youtube": _step(False, "not attempted"),
+        "database": _step(False, "not attempted"),
+    }
+
+    # --- S3 ---
+    if video.s3_key:
+        try:
+            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=video.s3_key)
+            steps["s3"] = _step(True)
+        except Exception as exc:  # noqa: BLE001
+            steps["s3"] = _step(False, str(exc))
+    else:
+        steps["s3"] = _step(True, None)  # nothing in S3 to remove
+
+    # --- YouTube (make private, not delete) ---
+    if video.youtube_video_id:
+        try:
+            set_video_privacy(video.youtube_video_id, "private")
+            steps["youtube"] = _step(True)
+        except Exception as exc:  # noqa: BLE001
+            steps["youtube"] = _step(False, str(exc))
+    else:
+        steps["youtube"] = _step(True, None)  # never made it to YouTube
+
+    # --- Database ---
+    try:
+        session.delete(video)
+        session.commit()
+        steps["database"] = _step(True)
+    except Exception as exc:  # noqa: BLE001
+        session.rollback()
+        steps["database"] = _step(False, str(exc))
+
+    success = all(step["success"] for step in steps.values())
+    failed_steps = [name for name, step in steps.items() if not step["success"]]
+
+    return {
+        "success": success,
+        "message": (
+            "Video removed from S3 and the database, and made private on YouTube."
+            if success
+            else f"Removal incomplete — failed: {', '.join(failed_steps)}."
+        ),
+        "steps": steps,
     }

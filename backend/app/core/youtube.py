@@ -5,7 +5,10 @@ import googleapiclient.discovery
 import googleapiclient.http
 
 _TOKEN_URI = "https://oauth2.googleapis.com/token"
-_SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+# Full "youtube" scope covers both uploading AND updating videos (e.g. changing
+# privacy). The narrower "youtube.upload" scope cannot update an existing video,
+# so the refresh token must be regenerated after widening this.
+_SCOPES = ["https://www.googleapis.com/auth/youtube"]
 
 
 def _require_env(name: str) -> str:
@@ -59,3 +62,22 @@ def upload_video(
         _, response = request.next_chunk()
 
     return response
+
+
+def set_video_privacy(video_id: str, privacy_status: str = "unlisted") -> dict:
+    """Update the privacy status of an existing YouTube video (e.g. to take it
+    down by unlisting it). Requires the full "youtube" scope, not "youtube.upload".
+    """
+    youtube = get_youtube_client()
+
+    return (
+        youtube.videos()
+        .update(
+            part="status",
+            body={
+                "id": video_id,
+                "status": {"privacyStatus": privacy_status},
+            },
+        )
+        .execute()
+    )

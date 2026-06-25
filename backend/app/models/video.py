@@ -26,6 +26,9 @@ class Video(SQLModel, table=True):
     youtube_video_id: str | None = Field(default=None)
     youtube_url: str | None = Field(default=None)
 
+    # email of the admin who uploaded this video; only they can manage/remove it
+    uploaded_by: str | None = Field(default=None, index=True)
+
     status: VideoStatus = Field(default=VideoStatus.PENDING, index=True)
 
     # human-readable summary of any step that failed (null when fully successful)

@@ -3,6 +3,7 @@ import Layout from "./components/Layout";
 import AdminRoute from "./components/AdminRoute";
 import HomePage from "./pages/HomePage";
 import UploadPage from "./pages/UploadPage";
+import VideoManagerPage from "./pages/VideoManagerPage";
 import AboutPage from "./pages/AboutPage";
 import TestPage from "./pages/TestPage";
 import TopicManagerPage from "./pages/TopicManagerPage";
@@ -28,6 +29,7 @@ function App() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/topic_manage" element={<TopicManagerPage />} />
                   <Route path="/upload" element={<UploadPage />} />
+                  <Route path="/videos" element={<VideoManagerPage />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/test" element={<TestPage />} />
                   <Route path="/admin/dashboard" element={<DashboardPage />} />

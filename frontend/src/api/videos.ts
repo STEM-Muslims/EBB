@@ -36,6 +36,32 @@ export interface VideoUploadResponse {
   } | null;
 }
 
+export interface Video {
+  id: number;
+  title: string;
+  description: string;
+  privacy_status: string;
+  s3_key: string | null;
+  s3_url: string | null;
+  youtube_video_id: string | null;
+  youtube_url: string | null;
+  uploaded_by: string | null;
+  status: string;
+  error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VideoDeleteResponse {
+  success: boolean;
+  message: string;
+  steps: {
+    s3: StepResult;
+    youtube: StepResult;
+    database: StepResult;
+  };
+}
+
 export const videosApi = {
   upload: async (params: VideoUploadParams): Promise<VideoUploadResponse> => {
     const body = new FormData();
@@ -59,6 +85,35 @@ export const videosApi = {
       throw new Error(message);
     }
 
+    return res.json();
+  },
+
+  list: async (): Promise<Video[]> => {
+    const res = await fetch(`${BASE_URL}/videos`, { headers: authHeader() });
+    if (!res.ok) {
+      let message = "Failed to load videos";
+      try {
+        const json = await res.json();
+        message = json.detail ?? message;
+      } catch {}
+      throw new Error(message);
+    }
+    return res.json();
+  },
+
+  remove: async (id: number): Promise<VideoDeleteResponse> => {
+    const res = await fetch(`${BASE_URL}/videos/${id}`, {
+      method: "DELETE",
+      headers: authHeader(),
+    });
+    if (!res.ok) {
+      let message = "Failed to remove video";
+      try {
+        const json = await res.json();
+        message = json.detail ?? message;
+      } catch {}
+      throw new Error(message);
+    }
     return res.json();
   },
 };
