@@ -1,4 +1,4 @@
-from app.routers import auth, files, topics, languages, users, videos, youtube
+from app.routers import auth, languages, topics, users, videos
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -20,12 +20,9 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(files.router)
 app.include_router(topics.router)
-app.include_router(youtube.router)
 app.include_router(videos.router)
 app.include_router(languages.router)
-
 
 
 @app.get("/")

@@ -18,14 +18,15 @@ Tech stack:
 .
 ├── backend/
 │   ├── app/
-│   │   ├── core/config.py    # DATABASE_URL + AWS S3 client
-│   │   ├── models/           # User, Topic SQLModel tables
-│   │   ├── routers/          # auth, users, files, topics
+│   │   ├── core/             # DATABASE_URL + AWS S3 client, YouTube API client
+│   │   ├── models/           # User, Topic, Video, Language, role/link tables
+│   │   ├── routers/          # auth, users, topics, videos, languages
 │   │   ├── config.py         # OAuth + JWT settings
 │   │   ├── db.py             # engine + session
-│   │   ├── dependencies.py   # get_db, require_admin
+│   │   ├── dependencies.py   # get_db, require_admin, get_current_user, require_roles
 │   │   └── main.py           # FastAPI app + CORS
 │   ├── alembic/              # DB migrations
+│   ├── scripts/              # one-off helpers (e.g. YouTube refresh token)
 │   ├── seed_admin.py         # bootstrap the first admin
 │   ├── dockerfile
 │   └── requirements.txt
