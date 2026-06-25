@@ -165,11 +165,10 @@ def reset_password(
     return {"ok": True}
 
 
-@router.patch("/users/{user_id}")
+@router.patch("/users/{user_id}", dependencies=[Depends(require_admin)])
 def update_user(
     user_id: int,
     req: UpdateUserRequest,
-    requester_email: str = Depends(require_admin),
     session: Session = Depends(get_db),
 ):
     user = session.get(User, user_id)
@@ -183,12 +182,6 @@ def update_user(
 
     if existing:
         raise HTTPException(400, "Email already registered")
-
-    # An admin can't strip their own admin rights. Since the requester is always
-    # an admin, this also covers the "last admin" case: the only way to demote the
-    # final admin is to demote yourself, which is blocked here.
-    if user.email == requester_email and user.is_admin and not req.is_admin:
-        raise HTTPException(400, "You cannot remove your own admin access")
 
     user.email = req.email
     user.is_admin = req.is_admin

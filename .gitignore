@@ -27,6 +27,9 @@ frontend/dist/
 # Misc
 coverage/
 
+# Secrets
+backend/youtube_client_secret.json
+
 #Claude
 CLAUDE.md
 .claude/

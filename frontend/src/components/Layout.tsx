@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { to: "/", label: "Home", icon: "⌂", exact: true },
   { to: "/topic_manage", label: "Topics", icon: "◈" },
   { to: "/upload", label: "Upload", icon: "↑" },
+  { to: "/videos", label: "Videos", icon: "▦" },
   { to: "/about", label: "About", icon: "○" },
   { to: "/admin/dashboard", label: "Admin", icon: "◆" },
 ];

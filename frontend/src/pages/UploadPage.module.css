@@ -1,0 +1,188 @@
+.page {
+    padding: 32px 36px;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.heading {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.sub {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* ── Card ─────────────────────────────── */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cardTitle {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+/* ── Fields ───────────────────────────── */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.hint {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.input,
+.select {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 7px 10px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+}
+
+.input:focus,
+.select:focus {
+    border-color: var(--text-primary);
+}
+
+.textarea {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 7px 10px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    background: var(--surface);
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.15s;
+    width: 100%;
+    font-family: inherit;
+}
+
+.textarea:focus {
+    border-color: var(--text-primary);
+}
+
+/* ── Actions ──────────────────────────── */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.btnPrimary {
+    background: var(--text-primary);
+    color: var(--surface);
+    border: 1px solid var(--text-primary);
+    border-radius: var(--radius-md);
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: opacity 0.1s;
+}
+
+.btnPrimary:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ── Status ───────────────────────────── */
+.error {
+    font-size: 12px;
+    color: var(--danger);
+}
+
+.successBox {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.successText {
+    font-size: 12px;
+    color: var(--success);
+    font-weight: 500;
+}
+
+.youtubeLink {
+    font-size: 13px;
+    color: var(--text-primary);
+    word-break: break-all;
+}
+
+/* ── Per-step results ─────────────────── */
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.step {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12.5px;
+}
+
+.stepIcon {
+    font-size: 12px;
+    width: 14px;
+    flex-shrink: 0;
+}
+
+.stepName {
+    font-weight: 500;
+    color: var(--text-primary);
+    min-width: 72px;
+}
+
+.stepOk {
+    color: var(--success);
+}
+
+.stepFail {
+    color: var(--danger);
+    word-break: break-word;
+}
