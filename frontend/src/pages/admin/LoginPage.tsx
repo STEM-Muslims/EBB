@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { authApi } from "../../api/users";
 import { API_URL } from "../../config";
+import styles from "./LoginPage.module.css";
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
@@ -18,87 +19,67 @@ export default function LoginPage() {
     try {
       const res = await authApi.login({ email, password });
       localStorage.setItem("admin_token", res.access_token);
-      window.location.href = "/admin";
+      window.location.href = "/";
     } catch (err: any) {
       setLocalError(err.message || "Invalid email or password");
     }
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 p-4">
-      <div className="bg-white/90 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl p-8 sm:p-10 w-full max-w-md flex flex-col gap-8">
-        <div className="text-center mt-2">
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            Admin Portal
-          </h1>
-          <p className="text-sm font-medium text-slate-500 mt-2 tracking-wide uppercase">
-            Education Beyond Borders
-          </p>
+    <main className={styles.page}>
+      <div className={styles.card}>
+        <div className={styles.head}>
+          <img
+            className={styles.logoImg}
+            src="/logo.png"
+            alt="Education Beyond Borders"
+          />
+          <h1 className={styles.title}>Sign in</h1>
         </div>
 
         {(urlError === "AccessDenied" || localError) && (
-          <div className="bg-red-50/80 border border-red-200 rounded-xl p-4 animate-in fade-in slide-in-from-top-2">
-            <p className="text-sm text-red-600 text-center font-medium">
-              {localError ||
-                "Your account is not authorised. Contact the project lead to request access."}
-            </p>
-          </div>
+          <p className={styles.error}>
+            {localError ||
+              "Your account is not authorised. Contact the project lead to request access."}
+          </p>
         )}
 
-        <form onSubmit={handlePasswordLogin} className="flex flex-col gap-5">
-          <div className="space-y-1.5">
-            <label className="block text-sm font-semibold text-slate-700 ml-1">
-              Email
-            </label>
+        <form onSubmit={handlePasswordLogin} className={styles.form}>
+          <div className={styles.field}>
+            <label className={styles.label}>Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 outline-none transition-all duration-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400"
+              className="input"
               placeholder="admin@example.com"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-sm font-semibold text-slate-700 ml-1">
-              Password
-            </label>
+          <div className={styles.field}>
+            <label className={styles.label}>Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 outline-none transition-all duration-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400"
+              className="input"
               placeholder="••••••••"
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full mt-2 bg-blue-600 text-white rounded-xl px-4 py-3.5 text-sm font-semibold shadow-sm hover:bg-blue-700 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 active:scale-[0.98]"
-          >
+          <button type="submit" className="btn btn--block">
             Sign In
           </button>
         </form>
 
-        <div className="relative flex items-center">
-          <div className="flex-grow border-t border-slate-200"></div>
-          <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-medium uppercase tracking-wider">
-            or continue with
-          </span>
-          <div className="flex-grow border-t border-slate-200"></div>
-        </div>
+        <div className={styles.divider}>or continue with</div>
 
-        <div className="mb-2">
-          <a
-            href={`${API_URL}/auth/google`}
-            className="flex items-center justify-center gap-3 w-full bg-white border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow transition-all duration-200 active:scale-[0.98]"
-          >
-            <GoogleIcon />
-            Sign in with Google
-          </a>
-        </div>
+        <a href={`${API_URL}/auth/google`} className={styles.google}>
+          <GoogleIcon />
+          Sign in with Google
+        </a>
       </div>
     </main>
   );

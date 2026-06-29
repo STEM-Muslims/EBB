@@ -10,7 +10,7 @@ export default function CallbackPage() {
     const token = searchParams.get("token");
     if (token) {
       storeAdminToken(token);
-      navigate("/admin/dashboard", { replace: true });
+      navigate("/", { replace: true });
     } else {
       navigate("/admin/login?error=AccessDenied", { replace: true });
     }

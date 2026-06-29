@@ -1,4 +1,4 @@
-.loading {
+﻿.loading {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -41,7 +41,7 @@
     gap: 16px;
 }
 
-/* ── Card ─────────────────────────────── */
+/* â”€â”€ Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -66,7 +66,7 @@
     color: var(--text-muted);
 }
 
-/* ── Account row ──────────────────────── */
+/* â”€â”€ Account row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .accountRow {
     display: flex;
     align-items: center;
@@ -77,7 +77,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: var(--text-primary);
+    background: var(--brand);
     color: var(--surface);
     display: flex;
     align-items: center;
@@ -111,7 +111,7 @@
     margin: 0;
 }
 
-/* ── Password form ────────────────────── */
+/* â”€â”€ Password form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .passwordForm {
     display: flex;
     flex-direction: column;
@@ -151,7 +151,7 @@
 }
 
 .input:focus {
-    border-color: var(--text-primary);
+    border-color: var(--brand);
 }
 
 .formActions {
@@ -160,7 +160,7 @@
     gap: 8px;
 }
 
-/* ── Create user form ─────────────────── */
+/* â”€â”€ Create user form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .createForm {
     display: flex;
     flex-direction: column;
@@ -198,7 +198,7 @@
     overflow-y: auto;
 }
 
-/* ── Table ────────────────────────────── */
+/* â”€â”€ Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -227,7 +227,7 @@
     border-bottom: none;
 }
 
-/* ── Badges ───────────────────────────── */
+/* â”€â”€ Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .badge {
     font-family: var(--font-mono);
     font-size: 10px;
@@ -259,11 +259,11 @@
     gap: 4px;
 }
 
-/* ── Buttons ──────────────────────────── */
+/* â”€â”€ Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .btnPrimary {
-    background: var(--text-primary);
+    background: var(--brand);
     color: var(--surface);
-    border: 1px solid var(--text-primary);
+    border: 1px solid var(--brand);
     border-radius: var(--radius-md);
     padding: 7px 16px;
     font-size: 13px;
@@ -305,7 +305,7 @@
     border-color: var(--danger);
 }
 
-/* ── Status ───────────────────────────── */
+/* â”€â”€ Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .error {
     font-size: 12px;
     color: var(--danger);
@@ -320,3 +320,4 @@
     font-size: 13px;
     color: var(--text-muted);
 }
+

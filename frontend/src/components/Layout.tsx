@@ -1,28 +1,44 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import { useAdmin } from "../hooks/useAdmin";
 import styles from "./Layout.module.css";
 
-const NAV_ITEMS = [
-  { to: "/", label: "Home", icon: "⌂", exact: true },
-  { to: "/topic_manage", label: "Topics", icon: "◈" },
-  { to: "/upload", label: "Upload", icon: "↑" },
-  { to: "/videos", label: "Videos", icon: "▦" },
-  { to: "/about", label: "About", icon: "○" },
-  { to: "/admin/dashboard", label: "Admin", icon: "◆" },
-];
+export interface NavItem {
+  to: string;
+  label: string;
+  icon: string;
+  exact?: boolean;
+}
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
+/**
+ * Shared application shell. The navigation panel sits across the top of the
+ * page and is used by both the admin and non-admin UIs; they differ only in
+ * `label` (a small section tag) and `navItems`.
+ */
+export default function Layout({
+  label,
+  navItems,
+  children,
+}: {
+  label?: string;
+  navItems: NavItem[];
+  children: React.ReactNode;
+}) {
+  const { email, logout } = useAdmin();
 
   return (
     <div className={styles.shell}>
-      <aside className={styles.sidebar}>
-        <div className={styles.logo}>
-          <span className={styles.logoMark}>◆</span>
-          <span className={styles.logoText}>Studybase</span>
+      <header className={styles.topbar}>
+        <div className={styles.brand}>
+          <img
+            className={styles.logoImg}
+            src="/logo.png"
+            alt="Education Beyond Borders"
+          />
+          {label && <span className={styles.brandLabel}>{label}</span>}
         </div>
 
         <nav className={styles.nav}>
-          {NAV_ITEMS.map(({ to, label, icon, exact }) => (
+          {navItems.map(({ to, label, icon, exact }) => (
             <NavLink
               key={to}
               to={to}
@@ -37,10 +53,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        <div className={styles.sidebarFooter}>
-          <span className={styles.footerText}>{location.pathname}</span>
+        <div className={styles.account}>
+          {email && (
+            <>
+              <span className={styles.avatar}>
+                {email.charAt(0).toUpperCase()}
+              </span>
+              <span className={styles.accountEmail}>{email}</span>
+            </>
+          )}
+          <button className={styles.signOut} onClick={logout}>
+            Sign out
+          </button>
         </div>
-      </aside>
+      </header>
 
       <main className={styles.main}>{children}</main>
     </div>

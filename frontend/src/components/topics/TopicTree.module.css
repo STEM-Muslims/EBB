@@ -1,4 +1,4 @@
-.tree {
+﻿.tree {
     padding: 6px 0;
 }
 
@@ -27,7 +27,7 @@
 }
 
 .nodeSelected {
-    background: var(--text-primary) !important;
+    background: var(--brand) !important;
     color: var(--surface);
 }
 
@@ -96,3 +96,4 @@
     color: var(--text-muted);
     font-style: italic;
 }
+

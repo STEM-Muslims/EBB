@@ -4,7 +4,7 @@ import uuid
 
 from app.core.config import AWS_REGION, S3_BUCKET_NAME, s3_client
 from app.core.youtube import set_video_privacy, upload_video
-from app.dependencies import get_current_user, get_db, require_admin
+from app.dependencies import get_current_user, get_db
 from app.models.user import User
 from app.models.video import Video, VideoStatus
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -28,7 +28,7 @@ async def upload_video_pipeline(
     description: str = Form(""),
     privacy_status: str = Form("unlisted"),
     session: Session = Depends(get_db),
-    email: str = Depends(require_admin),
+    user: User = Depends(get_current_user),
 ):
     """Upload a single video file and publish it to S3 + YouTube, recording the
     result in the database. Always returns 200 with a per-step breakdown so the
@@ -104,7 +104,7 @@ async def upload_video_pipeline(
             s3_url=s3_url if steps["s3"]["success"] else None,
             youtube_video_id=youtube_video_id,
             youtube_url=youtube_url,
-            uploaded_by=email,
+            uploaded_by=user.email,
             status=status,
             error=error_summary,
         )

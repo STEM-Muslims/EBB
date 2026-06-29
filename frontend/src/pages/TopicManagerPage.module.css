@@ -1,10 +1,10 @@
-.page {
+﻿.page {
     display: flex;
     height: 100%;
     overflow: hidden;
 }
 
-/* ── Tree panel ───────────────── */
+/* â”€â”€ Tree panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .treePanel {
     width: 280px;
     flex-shrink: 0;
@@ -50,9 +50,9 @@
 }
 
 .newRootBtn:hover {
-    background: var(--text-primary);
+    background: var(--brand);
     color: var(--surface);
-    border-color: var(--text-primary);
+    border-color: var(--brand);
 }
 
 .treeScroll {
@@ -67,7 +67,7 @@
     padding: 16px;
 }
 
-/* ── Editor panel ─────────────── */
+/* â”€â”€ Editor panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .editorPanel {
     flex: 1;
     overflow-y: auto;
@@ -121,7 +121,7 @@
     margin: 4px 0;
 }
 
-/* ── Breadcrumb ───────────────── */
+/* â”€â”€ Breadcrumb â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .breadcrumb {
     display: flex;
     align-items: center;
@@ -163,7 +163,7 @@
     font-weight: 500;
 }
 
-/* ── New subject form ─────────── */
+/* â”€â”€ New subject form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .newSubjectForm {
     display: flex;
     flex-direction: column;
@@ -197,7 +197,7 @@
 }
 
 .input:focus {
-    border-color: var(--text-primary);
+    border-color: var(--brand);
 }
 
 .textarea {
@@ -215,7 +215,7 @@
 }
 
 .textarea:focus {
-    border-color: var(--text-primary);
+    border-color: var(--brand);
 }
 
 .error {
@@ -230,9 +230,9 @@
 }
 
 .btnPrimary {
-    background: var(--text-primary);
+    background: var(--brand);
     color: var(--surface);
-    border: 1px solid var(--text-primary);
+    border: 1px solid var(--brand);
     border-radius: var(--radius-md);
     padding: 8px 18px;
     font-size: 13px;
@@ -257,3 +257,4 @@
 .btnGhost:hover {
     background: var(--border);
 }
+
