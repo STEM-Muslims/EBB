@@ -43,8 +43,13 @@ export default function UserTopicsPage() {
   return (
     <div className="pageWrap">
       <div className="pageHead">
-        <h1>Subjects &amp; topics</h1>
-        <p className="pageSub">The curriculum, organised by subject and topic.</p>
+        <div className="pageHeadText">
+          <span className="pageEyebrow">Curriculum</span>
+          <h1>Subjects &amp; topics</h1>
+          <p className="pageSub">
+            The curriculum, organised by subject and topic.
+          </p>
+        </div>
       </div>
 
       {status === "loading" && <p className="emptyState">Loading curriculum…</p>}

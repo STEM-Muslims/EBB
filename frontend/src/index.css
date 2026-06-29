@@ -33,15 +33,17 @@ body {
     min-height: 100vh;
 }
 
-/* Headings use the decorative display serif in brand green by default. */
+/* Headings: restrained near-black with tight tracking; brand green is reserved
+   as an accent rather than the default heading colour (Linear-style restraint). */
 h1,
 h2,
 h3 {
     font-family: var(--font-display);
-    color: var(--brand);
+    color: var(--text-h);
     margin: 0 0 0.5em;
     line-height: 1.15;
-    letter-spacing: 0.01em;
+    letter-spacing: -0.018em;
+    font-feature-settings: "ss01", "cv05";
 }
 
 h1 {

@@ -1,17 +1,43 @@
-from app.dependencies import get_db, require_admin
+import uuid
+from urllib.parse import urlparse
+
+from app.core.config import AWS_REGION, S3_BUCKET_NAME, s3_client
+from app.dependencies import get_current_user, get_db, require_admin
 from app.models.language import Language
 from app.models.role import RoleType, UserRole
 from app.models.topic import LevelType, Topic
 from app.models.user import User
 from app.models.user_language import UserLanguage
 from app.models.user_subject import UserTeachingSubject
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
 router = APIRouter()
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Avatar uploads: small, already downscaled client-side. Keep a generous cap as a
+# safety net and only accept a short list of web-friendly image types.
+_MAX_AVATAR_BYTES = 5 * 1024 * 1024
+_AVATAR_EXT = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+}
+
+
+def _avatar_url(key: str) -> str:
+    return f"https://{S3_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/{key}"
+
+
+def _avatar_key_from_url(url: str | None) -> str | None:
+    """Recover the S3 object key from a stored avatar URL (for cleanup)."""
+    if not url:
+        return None
+    key = urlparse(url).path.lstrip("/")
+    return key if key.startswith("avatars/") else None
 
 
 class CreateUserRequest(BaseModel):
@@ -28,6 +54,7 @@ class UserResponse(BaseModel):
     email: str
     is_admin: bool
     google_id: str | None
+    avatar_url: str | None
     roles: list[RoleType]
     teaching_subject_ids: list[int]
     language_ids: list[int]
@@ -71,6 +98,7 @@ def _user_response(user: User, session: Session) -> UserResponse:
         email=user.email,
         is_admin=bool(user.is_admin),
         google_id=user.google_id,
+        avatar_url=user.avatar_url,
         **build_user_profile(user, session),
     )
 
@@ -144,6 +172,81 @@ def change_own_password(
     session.commit()
 
     return {"ok": True}
+
+
+@router.post("/users/me/avatar")
+async def upload_own_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    """Set the signed-in user's profile picture. Any provisioned user may do this
+    (not admin-only). The image is stored in S3 and its public URL saved on the
+    user row; a previously uploaded avatar is removed from S3 best-effort."""
+    ext = _AVATAR_EXT.get((file.content_type or "").lower())
+    if not ext:
+        raise HTTPException(400, "Avatar must be a JPEG, PNG, WebP or GIF image.")
+
+    data = await file.read()
+    if not data:
+        raise HTTPException(400, "The image file is empty.")
+    if len(data) > _MAX_AVATAR_BYTES:
+        raise HTTPException(400, "Image is too large (max 5 MB).")
+
+    user = session.exec(select(User).where(User.email == current_user.email)).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    key = f"avatars/{uuid.uuid4().hex}.{ext}"
+    try:
+        s3_client.put_object(
+            Bucket=S3_BUCKET_NAME,
+            Key=key,
+            Body=data,
+            ContentType=file.content_type,
+            ACL="public-read",
+        )
+    except Exception as exc:  # noqa: BLE001 - surface the reason to the client
+        raise HTTPException(502, f"Could not store the image: {exc}")
+
+    old_key = _avatar_key_from_url(user.avatar_url)
+
+    user.avatar_url = _avatar_url(key)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    if old_key and old_key != key:
+        try:
+            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=old_key)
+        except Exception:  # noqa: BLE001 - cleanup is best-effort
+            pass
+
+    return {"avatar_url": user.avatar_url}
+
+
+@router.delete("/users/me/avatar")
+def delete_own_avatar(
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    """Remove the signed-in user's profile picture (clears the row + S3 object)."""
+    user = session.exec(select(User).where(User.email == current_user.email)).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    key = _avatar_key_from_url(user.avatar_url)
+    user.avatar_url = None
+    session.add(user)
+    session.commit()
+
+    if key:
+        try:
+            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=key)
+        except Exception:  # noqa: BLE001 - cleanup is best-effort
+            pass
+
+    return {"avatar_url": None}
 
 
 @router.patch("/users/{user_id}/password", dependencies=[Depends(require_admin)])

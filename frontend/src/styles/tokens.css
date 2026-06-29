@@ -93,11 +93,18 @@
     --radius-lg: 20px;
     --radius-pill: 30px;
 
-    /* ---- Shadows --------------------------------------------------------- */
-    --shadow-card: 0 4px 12px rgba(31, 36, 33, 0.12);
-    --shadow-elevated: 0 10px 30px rgba(31, 36, 33, 0.12);
-    --shadow-brand: 0 8px 22px rgba(14, 124, 90, 0.32);
-    --shadow-nav: 0 2px 12px rgba(10, 92, 67, 0.18);
+    /* ---- Shadows (Linear-style restraint: hairline-led, subtle depth) ---- */
+    --shadow-xs: 0 1px 2px rgba(20, 33, 27, 0.06);
+    --shadow-card:
+        0 1px 2px rgba(20, 33, 27, 0.04), 0 1px 3px rgba(20, 33, 27, 0.06);
+    --shadow-elevated:
+        0 1px 2px rgba(20, 33, 27, 0.04), 0 8px 24px -6px rgba(20, 33, 27, 0.14);
+    --shadow-pop:
+        0 2px 4px rgba(20, 33, 27, 0.06), 0 12px 32px -8px rgba(20, 33, 27, 0.22);
+    --shadow-brand: 0 6px 18px -4px rgba(14, 124, 90, 0.32);
+    --shadow-nav: 0 1px 0 rgba(255, 255, 255, 0.04);
+    /* Focus ring (soft brand halo, reused across interactive elements) */
+    --ring: 0 0 0 3px var(--brand-soft);
     /* legacy alias */
     --shadow: var(--shadow-card);
 

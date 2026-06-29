@@ -7,3 +7,4 @@ class User(SQLModel, table=True):
     hashed_password: str | None = Field(default=None)
     google_id: str | None = Field(default=None, index=True)
     is_admin: bool | None = Field(default=False)
+    avatar_url: str | None = Field(default=None)

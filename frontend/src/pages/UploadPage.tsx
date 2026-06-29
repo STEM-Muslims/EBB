@@ -10,6 +10,18 @@ const STEP_LABELS: Record<string, string> = {
   database: "Database",
 };
 
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB"];
+  let val = bytes / 1024;
+  let i = 0;
+  while (val >= 1024 && i < units.length - 1) {
+    val /= 1024;
+    i++;
+  }
+  return `${val.toFixed(1)} ${units[i]}`;
+}
+
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -64,35 +76,57 @@ export default function UploadPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.heading}>Upload a video</h1>
-        <p className={styles.sub}>
-          Publishes to S3 and the EBB YouTube channel, and records it in the database.
-        </p>
+    <div className="pageWrap" style={{ maxWidth: 680 }}>
+      <div className="pageHead">
+        <div className="pageHeadText">
+          <span className="pageEyebrow">Publish</span>
+          <h1>Upload a video</h1>
+          <p className="pageSub">
+            Publishes to S3 and the EBB YouTube channel, and records it in the
+            database.
+          </p>
+        </div>
       </div>
 
-      <div className={styles.card}>
-        <h2 className={styles.cardTitle}>Video details</h2>
-
+      <div className="card card--pad-lg stack" style={{ gap: "1.25rem" }}>
         <div className={styles.field}>
           <label className={styles.label}>Video file</label>
-          <input
-            className={styles.input}
-            type="file"
-            accept="video/*"
-            onChange={(e) => {
-              setFile(e.target.files?.[0] ?? null);
-              reset();
-            }}
-          />
-          <span className={styles.hint}>The video file to upload (mp4, mov, …)</span>
+          <label className={`${styles.dropzone} ${file ? styles.dropzoneFilled : ""}`}>
+            <input
+              type="file"
+              accept="video/*"
+              className={styles.fileInput}
+              onChange={(e) => {
+                setFile(e.target.files?.[0] ?? null);
+                reset();
+              }}
+            />
+            {file ? (
+              <>
+                <span className={styles.dropIcon} aria-hidden="true">
+                  ▶
+                </span>
+                <span className={styles.dropMain}>{file.name}</span>
+                <span className={styles.dropSub}>
+                  {formatBytes(file.size)} · Click to replace
+                </span>
+              </>
+            ) : (
+              <>
+                <span className={styles.dropIcon} aria-hidden="true">
+                  ↑
+                </span>
+                <span className={styles.dropMain}>Choose a video file</span>
+                <span className={styles.dropSub}>mp4, mov, and similar formats</span>
+              </>
+            )}
+          </label>
         </div>
 
         <div className={styles.field}>
           <label className={styles.label}>Title</label>
           <input
-            className={styles.input}
+            className="input"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
@@ -105,13 +139,13 @@ export default function UploadPage() {
         <div className={styles.field}>
           <label className={styles.label}>Description</label>
           <textarea
-            className={styles.textarea}
+            className="textarea"
             value={description}
             onChange={(e) => {
               setDescription(e.target.value);
               reset();
             }}
-            placeholder="Optional description..."
+            placeholder="Optional description…"
             rows={4}
           />
         </div>
@@ -119,7 +153,7 @@ export default function UploadPage() {
         <div className={styles.field}>
           <label className={styles.label}>Visibility</label>
           <select
-            className={styles.select}
+            className="select"
             value={privacy}
             onChange={(e) => {
               setPrivacy(e.target.value as Privacy);
@@ -135,10 +169,11 @@ export default function UploadPage() {
         {status === "error" && <p className={styles.error}>{error}</p>}
 
         {status === "done" && result && (
-          <div className={styles.successBox}>
-            <p
-              className={result.success ? styles.successText : styles.error}
-            >
+          <div
+            className={styles.successBox}
+            data-ok={result.success ? "true" : "false"}
+          >
+            <p className={result.success ? styles.successText : styles.error}>
               {result.message}
             </p>
 
@@ -147,7 +182,12 @@ export default function UploadPage() {
                 const step = result.steps[key];
                 return (
                   <div key={key} className={styles.step}>
-                    <span className={styles.stepIcon}>{step.success ? "✓" : "✗"}</span>
+                    <span
+                      className={step.success ? styles.stepOk : styles.stepFail}
+                      aria-hidden="true"
+                    >
+                      {step.success ? "✓" : "✗"}
+                    </span>
                     <span className={styles.stepName}>{STEP_LABELS[key]}</span>
                     <span className={step.success ? styles.stepOk : styles.stepFail}>
                       {step.success ? "Success" : step.error ?? "Failed"}
@@ -172,7 +212,7 @@ export default function UploadPage() {
 
         <div className={styles.actions}>
           <button
-            className={styles.btnPrimary}
+            className="btn"
             onClick={submit}
             disabled={status === "loading"}
           >

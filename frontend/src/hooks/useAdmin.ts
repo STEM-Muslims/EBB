@@ -8,6 +8,7 @@ const TOKEN_KEY = "admin_token";
 interface MeResponse {
   email: string;
   is_admin: boolean;
+  avatar_url: string | null;
   roles: RoleType[];
 }
 
@@ -19,6 +20,7 @@ export function useAdmin() {
   const [email, setEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [roles, setRoles] = useState<RoleType[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -37,6 +39,7 @@ export function useAdmin() {
         setEmail(data.email);
         setIsAdmin(Boolean(data.is_admin));
         setRoles(data.roles ?? []);
+        setAvatarUrl(data.avatar_url ?? null);
       })
       .catch(() => {
         localStorage.removeItem(TOKEN_KEY);
@@ -50,5 +53,5 @@ export function useAdmin() {
     navigate("/admin/login", { replace: true });
   }
 
-  return { email, isAdmin, roles, loading, logout };
+  return { email, isAdmin, roles, avatarUrl, loading, logout };
 }

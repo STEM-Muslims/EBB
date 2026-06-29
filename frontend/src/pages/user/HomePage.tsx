@@ -34,35 +34,38 @@ export default function UserHomePage() {
   return (
     <div className="pageWrap">
       <div className="pageHead">
-        <h1>Welcome back</h1>
-        <p className="pageSub">{email}</p>
+        <div className="pageHeadText">
+          <span className="pageEyebrow">Overview</span>
+          <h1>Welcome back</h1>
+          <p className="pageSub">{email}</p>
+        </div>
+        <div className="pageActions">
+          {roles.length > 0 ? (
+            roles.map((r) => (
+              <span key={r} className="pill">
+                {ROLE_LABEL[r] ?? r}
+              </span>
+            ))
+          ) : (
+            <span className="pill pill--stone">Member</span>
+          )}
+        </div>
       </div>
 
-      <div className={styles.roleRow}>
-        {roles.length > 0 ? (
-          roles.map((r) => (
-            <span key={r} className="pill">
-              {ROLE_LABEL[r] ?? r}
-            </span>
-          ))
-        ) : (
-          <span className="pill pill--stone">Member</span>
-        )}
-      </div>
-
-      <div className="cardGrid" style={{ marginTop: "2rem" }}>
+      <h2 className={styles.sectionLabel}>Quick actions</h2>
+      <div className={styles.shortcutGrid}>
         {SHORTCUTS.map((s) => (
-          <Link key={s.to} to={s.to} className="card card--hover">
-            <span
-              className="iconChip iconChip--sm"
-              style={{ marginBottom: "1rem" }}
-            >
+          <Link key={s.to} to={s.to} className={`card card--hover ${styles.shortcut}`}>
+            <span className={`iconChip iconChip--sm ${styles.shortcutIcon}`}>
               {s.icon}
             </span>
-            <h3 style={{ color: "var(--brand-darker)", marginBottom: "0.35rem" }}>
-              {s.title}
-            </h3>
-            <p style={{ color: "var(--text-secondary)", margin: 0 }}>{s.desc}</p>
+            <div className={styles.shortcutBody}>
+              <h3 className={styles.shortcutTitle}>{s.title}</h3>
+              <p className={styles.shortcutDesc}>{s.desc}</p>
+            </div>
+            <span className={styles.shortcutArrow} aria-hidden="true">
+              →
+            </span>
           </Link>
         ))}
       </div>

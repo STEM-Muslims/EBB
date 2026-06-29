@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
+import AccountMenu from "./AccountMenu";
 import styles from "./Layout.module.css";
 
 export interface NavItem {
@@ -23,7 +24,7 @@ export default function Layout({
   navItems: NavItem[];
   children: React.ReactNode;
 }) {
-  const { email, logout } = useAdmin();
+  const { email, isAdmin, roles, avatarUrl, logout } = useAdmin();
 
   return (
     <div className={styles.shell}>
@@ -55,16 +56,14 @@ export default function Layout({
 
         <div className={styles.account}>
           {email && (
-            <>
-              <span className={styles.avatar}>
-                {email.charAt(0).toUpperCase()}
-              </span>
-              <span className={styles.accountEmail}>{email}</span>
-            </>
+            <AccountMenu
+              email={email}
+              roles={roles}
+              isAdmin={isAdmin}
+              avatarUrl={avatarUrl}
+              onLogout={logout}
+            />
           )}
-          <button className={styles.signOut} onClick={logout}>
-            Sign out
-          </button>
         </div>
       </header>
 

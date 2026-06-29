@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { videosApi, type Video } from "../../api/videos";
+import { useAdmin } from "../../hooks/useAdmin";
 import styles from "./user.module.css";
 
 function formatDate(iso: string) {
@@ -14,7 +16,9 @@ function formatDate(iso: string) {
 }
 
 export default function UserVideosPage() {
+  const { email } = useAdmin();
   const [videos, setVideos] = useState<Video[]>([]);
+  const [onlyMine, setOnlyMine] = useState(false);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
@@ -29,25 +33,66 @@ export default function UserVideosPage() {
       .catch(() => setStatus("error"));
   }, []);
 
+  const visible = useMemo(
+    () =>
+      onlyMine
+        ? videos.filter((v) => !!email && v.uploaded_by === email)
+        : videos,
+    [videos, onlyMine, email],
+  );
+
   return (
     <div className="pageWrap">
       <div className="pageHead">
-        <h1>Video lessons</h1>
-        <p className="pageSub">Published lessons available to watch.</p>
+        <div className="pageHeadText">
+          <span className="pageEyebrow">Library</span>
+          <h1>Video lessons</h1>
+          <p className="pageSub">Published lessons available to watch.</p>
+        </div>
+        <div className="pageActions">
+          {status === "ready" && (
+            <span className="pill pill--stone">
+              {visible.length} {visible.length === 1 ? "lesson" : "lessons"}
+            </span>
+          )}
+          <button
+            type="button"
+            className={`btn btn--secondary btn--sm ${onlyMine ? styles.filterOn : ""}`}
+            onClick={() => setOnlyMine((v) => !v)}
+          >
+            {onlyMine ? "My uploads" : "All videos"}
+          </button>
+          <Link to="/upload" className="btn btn--sm">
+            Upload
+          </Link>
+        </div>
       </div>
 
-      {status === "loading" && <p className="emptyState">Loading videos…</p>}
+      {status === "loading" && (
+        <div className={styles.videoList}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className={`card ${styles.skeletonCard}`} />
+          ))}
+        </div>
+      )}
       {status === "error" && (
         <p className="emptyState">Couldn’t load videos. Please try again later.</p>
       )}
-      {status === "ready" && videos.length === 0 && (
-        <p className="emptyState">No videos have been published yet.</p>
+      {status === "ready" && visible.length === 0 && (
+        <p className="emptyState">
+          {onlyMine
+            ? "You haven’t uploaded any videos yet."
+            : "No videos have been published yet."}
+        </p>
       )}
 
-      {status === "ready" && videos.length > 0 && (
+      {status === "ready" && visible.length > 0 && (
         <div className={styles.videoList}>
-          {videos.map((v) => (
+          {visible.map((v) => (
             <article key={v.id} className={`card ${styles.videoCard}`}>
+              <span className={styles.videoThumb} aria-hidden="true">
+                ▶
+              </span>
               <div className={styles.videoInfo}>
                 <h3 className={styles.videoTitle}>{v.title}</h3>
                 {v.description && (

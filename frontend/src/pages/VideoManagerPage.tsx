@@ -1,7 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { videosApi, type Video } from "../api/videos";
 import { useAdmin } from "../hooks/useAdmin";
-import styles from "./VideoManagerPage.module.css";
+import styles from "./user/user.module.css";
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? ""
+    : d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+}
 
 export default function VideoManagerPage() {
   const { email, isAdmin, loading: authLoading } = useAdmin();
@@ -61,85 +72,132 @@ export default function VideoManagerPage() {
     }
   }
 
-  return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.heading}>Manage videos</h1>
-        <p className={styles.sub}>
-          Every uploaded video. You can only remove the ones you uploaded.
-        </p>
-      </div>
+  const busy = loading || authLoading;
 
-      <div className={styles.toolbar}>
-        <label className={styles.toggle}>
-          <input
-            type="checkbox"
-            checked={onlyMine}
-            onChange={(e) => setOnlyMine(e.target.checked)}
-          />
-          <span>Only mine</span>
-        </label>
-        <button className={styles.btnGhost} onClick={load} disabled={loading}>
-          {loading ? "Refreshing…" : "Refresh"}
-        </button>
+  return (
+    <div className="pageWrap">
+      <div className="pageHead">
+        <div className="pageHeadText">
+          <span className="pageEyebrow">Library</span>
+          <h1>Manage videos</h1>
+          <p className="pageSub">
+            Every uploaded video. You can only remove the ones you uploaded.
+          </p>
+        </div>
+        <div className="pageActions">
+          {!busy && (
+            <span className="pill pill--stone">
+              {visible.length} {visible.length === 1 ? "video" : "videos"}
+            </span>
+          )}
+          <button
+            type="button"
+            className={`btn btn--secondary btn--sm ${onlyMine ? styles.filterOn : ""}`}
+            onClick={() => setOnlyMine((v) => !v)}
+          >
+            {onlyMine ? "My uploads" : "All videos"}
+          </button>
+          <button
+            className="btn btn--ghost btn--sm"
+            onClick={load}
+            disabled={loading}
+          >
+            {loading ? "Refreshing…" : "Refresh"}
+          </button>
+        </div>
       </div>
 
       {notice && <p className={styles.notice}>{notice}</p>}
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <p className={styles.errorMsg}>{error}</p>}
 
-      {loading || authLoading ? (
-        <p className={styles.muted}>Loading…</p>
-      ) : visible.length === 0 ? (
-        <p className={styles.muted}>
-          {onlyMine ? "You haven't uploaded any videos yet." : "No videos found."}
+      {busy && (
+        <div className={styles.videoList}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className={`card ${styles.skeletonCard}`} />
+          ))}
+        </div>
+      )}
+
+      {!busy && visible.length === 0 && (
+        <p className="emptyState">
+          {onlyMine
+            ? "You haven’t uploaded any videos yet."
+            : "No videos found."}
         </p>
-      ) : (
-        <div className={styles.list}>
+      )}
+
+      {!busy && visible.length > 0 && (
+        <div className={styles.videoList}>
           {visible.map((v) => {
             const owned = mine(v);
             return (
-              <div key={v.id} className={styles.card}>
-                <div className={styles.cardMain}>
-                  <div className={styles.titleRow}>
-                    <span className={styles.title}>{v.title}</span>
-                    <span className={styles.status}>{v.status}</span>
-                  </div>
-
-                  <div className={styles.meta}>
-                    <span>{v.uploaded_by ?? "unknown uploader"}</span>
-                    <span className={styles.dot}>·</span>
-                    <span>{new Date(v.created_at).toLocaleDateString()}</span>
-                    <span className={styles.dot}>·</span>
-                    <span>{v.privacy_status}</span>
-                  </div>
-
-                  <div className={styles.links}>
+              <article key={v.id} className={`card ${styles.videoCard}`}>
+                <span className={styles.videoThumb} aria-hidden="true">
+                  ▶
+                </span>
+                <div className={styles.videoInfo}>
+                  <h3 className={styles.videoTitle}>{v.title}</h3>
+                  {v.description && (
+                    <p className={styles.videoDesc}>{v.description}</p>
+                  )}
+                  <div className={styles.videoMeta}>
+                    <span className={`pill pill--stone ${styles.videoStatus}`}>
+                      {v.status}
+                    </span>
+                    <span>Uploaded by {v.uploaded_by ?? "unknown"}</span>
+                    {v.created_at && <span>Added {formatDate(v.created_at)}</span>}
+                    {v.privacy_status && (
+                      <span>Visibility: {v.privacy_status}</span>
+                    )}
                     {v.youtube_url && (
-                      <a href={v.youtube_url} target="_blank" rel="noreferrer">
+                      <a
+                        className={styles.videoLink}
+                        href={v.youtube_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         YouTube
                       </a>
                     )}
                     {isAdmin && v.s3_url && (
-                      <a href={v.s3_url} target="_blank" rel="noreferrer">
+                      <a
+                        className={styles.videoLink}
+                        href={v.s3_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         S3
                       </a>
                     )}
                   </div>
                 </div>
-
-                <button
-                  className={styles.btnDanger}
-                  onClick={() => remove(v)}
-                  disabled={(!owned && !isAdmin) || removingId === v.id}
-                  title={
-                    owned || isAdmin
-                      ? "Remove from S3, make private on YouTube, delete record"
-                      : "Only the uploader can remove this video"
-                  }
-                >
-                  {removingId === v.id ? "Removing…" : "Remove"}
-                </button>
-              </div>
+                <div className={styles.videoActions}>
+                  {v.youtube_url ? (
+                    <a
+                      className="btn btn--sm"
+                      href={v.youtube_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Watch
+                    </a>
+                  ) : (
+                    <span className="pill pill--stone">Processing</span>
+                  )}
+                  <button
+                    className={styles.btnRemove}
+                    onClick={() => remove(v)}
+                    disabled={(!owned && !isAdmin) || removingId === v.id}
+                    title={
+                      owned || isAdmin
+                        ? "Remove from S3, make private on YouTube, delete record"
+                        : "Only the uploader can remove this video"
+                    }
+                  >
+                    {removingId === v.id ? "Removing…" : "Remove"}
+                  </button>
+                </div>
+              </article>
             );
           })}
         </div>

@@ -108,6 +108,7 @@ def get_me(
     return {
         "email": current_user.email,
         "is_admin": bool(current_user.is_admin),
+        "avatar_url": current_user.avatar_url,
         **profile,
     }
 
