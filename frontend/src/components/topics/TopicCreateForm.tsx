@@ -4,9 +4,10 @@ import type { LevelType, Topic } from "../../types/topics";
 import styles from "./TopicCreateForm.module.css";
 
 const CHILD_LEVEL: Record<LevelType, LevelType> = {
-  SUBJECT: "TOPIC",
-  TOPIC: "VIDEO",
-  VIDEO: "VIDEO",
+  SUBJECT: "MODULE",
+  MODULE: "CHAPTER",
+  CHAPTER: "TOPIC",
+  TOPIC: "TOPIC", // leaf — handled by canAdd below
 };
 
 export default function TopicCreateForm({
@@ -22,7 +23,7 @@ export default function TopicCreateForm({
   const [error, setError] = useState<string | null>(null);
 
   const childLevel = CHILD_LEVEL[parent.level_type];
-  const canAdd = parent.level_type !== "VIDEO";
+  const canAdd = parent.level_type !== "TOPIC";
 
   async function create() {
     if (!name.trim()) {
@@ -52,7 +53,7 @@ export default function TopicCreateForm({
   if (!canAdd) {
     return (
       <div className={styles.blocked}>
-        <p>Video nodes cannot have children.</p>
+        <p>Topics are the deepest level and cannot have children.</p>
       </div>
     );
   }

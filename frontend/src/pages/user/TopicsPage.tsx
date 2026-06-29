@@ -1,34 +1,15 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { topicsApi } from "../../api/topics";
 import type { Topic } from "../../types/topics";
-import styles from "./user.module.css";
-
-function TopicNode({ topic }: { topic: Topic }) {
-  const children = (topic.children ?? []).filter((c) => c.is_active);
-  return (
-    <li>
-      <div className={styles.node}>
-        <span className={styles.levelTag} data-level={topic.level_type}>
-          {topic.level_type}
-        </span>
-        <span className={styles.nodeName}>{topic.name}</span>
-      </div>
-      {children.length > 0 && (
-        <ul className={styles.subtree}>
-          {children.map((c) => (
-            <TopicNode key={c.id} topic={c} />
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-}
+import TopicAccordion from "../../components/topics/TopicAccordion";
 
 export default function UserTopicsPage() {
   const [tree, setTree] = useState<Topic[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
+  const navigate = useNavigate();
 
   useEffect(() => {
     topicsApi
@@ -40,6 +21,11 @@ export default function UserTopicsPage() {
       .catch(() => setStatus("error"));
   }, []);
 
+  function handleSelect(topic: Topic) {
+    // Only leaf topics have a detail/video page.
+    if (topic.level_type === "TOPIC") navigate(`/topics/${topic.id}`);
+  }
+
   return (
     <div className="pageWrap">
       <div className="pageHead">
@@ -47,7 +33,8 @@ export default function UserTopicsPage() {
           <span className="pageEyebrow">Curriculum</span>
           <h1>Subjects &amp; topics</h1>
           <p className="pageSub">
-            The curriculum, organised by subject and topic.
+            Browse the curriculum: subject → module → chapter → topic. Open a
+            topic to see its video.
           </p>
         </div>
       </div>
@@ -61,14 +48,8 @@ export default function UserTopicsPage() {
       )}
 
       {status === "ready" && tree.length > 0 && (
-        <div className="card">
-          <ul className={styles.tree}>
-            {tree
-              .filter((t) => t.is_active)
-              .map((t) => (
-                <TopicNode key={t.id} topic={t} />
-              ))}
-          </ul>
+        <div className="card card--pad-lg">
+          <TopicAccordion nodes={tree} onSelect={handleSelect} />
         </div>
       )}
     </div>

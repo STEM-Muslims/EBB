@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { topicsApi } from "../api/topics";
 import type { Topic } from "../types/topics";
-import TopicTree from "../components/topics/TopicTree";
+import TopicAccordion from "../components/topics/TopicAccordion";
 import TopicEditor from "../components/topics/TopicEditor";
 import TopicCreateForm from "../components/topics/TopicCreateForm";
+import PostTaskForm from "../components/topics/PostTaskForm";
+import type { ArchivedTopic } from "../types/topics";
 import styles from "./TopicManagerPage.module.css";
 
 function flattenTree(nodes: Topic[]): Topic[] {
@@ -28,13 +31,14 @@ function buildBreadcrumb(flat: Topic[], node: Topic): Topic[] {
   return path;
 }
 
-type PanelMode = "empty" | "selected" | "new-root";
+type PanelMode = "empty" | "selected" | "new-root" | "archived";
 
 export default function TopicManagerPage() {
   const [tree, setTree] = useState<Topic[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [panelMode, setPanelMode] = useState<PanelMode>("empty");
+  const [archived, setArchived] = useState<ArchivedTopic[]>([]);
 
   async function load() {
     setLoading(true);
@@ -48,11 +52,28 @@ export default function TopicManagerPage() {
     }
   }
 
+  async function openArchived() {
+    setSelectedId(null);
+    setPanelMode("archived");
+    try {
+      setArchived(await topicsApi.getArchived());
+    } catch (e) {
+      console.error("Failed to load archived topics:", e);
+    }
+  }
+
+  async function restore(id: number) {
+    await topicsApi.restore(id);
+    setArchived((prev) => prev.filter((t) => t.id !== id));
+    load();
+  }
+
   useEffect(() => {
     load();
   }, []);
 
   const flat = flattenTree(tree);
+  // Re-read the selected node from the freshly loaded tree so it reflects edits.
   const selected = selectedId
     ? (flat.find((t) => t.id === selectedId) ?? null)
     : null;
@@ -74,28 +95,36 @@ export default function TopicManagerPage() {
       {/* ── LEFT PANEL: TREE ─────────────────── */}
       <aside className={styles.treePanel}>
         <div className={styles.treePanelHeader}>
-          <span className={styles.treePanelTitle}>Topics</span>
-          <button
-            className={styles.newRootBtn}
-            onClick={() => {
-              setSelectedId(null);
-              setPanelMode("new-root");
-            }}
-            title="Add subject"
-          >
-            +
-          </button>
+          <span className={styles.treePanelTitle}>Curriculum</span>
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            <button
+              className="btn btn--ghost btn--sm"
+              onClick={openArchived}
+              title="View archived topics"
+            >
+              Archived
+            </button>
+            <button
+              className={styles.newRootBtn}
+              onClick={() => {
+                setSelectedId(null);
+                setPanelMode("new-root");
+              }}
+              title="Add subject"
+            >
+              +
+            </button>
+          </div>
         </div>
 
         <div className={styles.treeScroll}>
           {loading ? (
             <p className={styles.loadingMsg}>Loading…</p>
           ) : (
-            <TopicTree
+            <TopicAccordion
               nodes={tree}
               selectedId={selectedId}
               onSelect={handleSelect}
-              onReorder={handleReorder}
             />
           )}
         </div>
@@ -107,7 +136,7 @@ export default function TopicManagerPage() {
           <div className={styles.emptyState}>
             <span className={styles.emptyIcon}>◈</span>
             <p>
-              Select a topic to edit,
+              Select an item to edit,
               <br />
               or add a new subject.
             </p>
@@ -141,20 +170,83 @@ export default function TopicManagerPage() {
             />
             <div className={styles.divider} />
             <TopicCreateForm parent={selected} onCreated={load} />
+
+            {selected.level_type === "TOPIC" && (
+              <>
+                <div className={styles.divider} />
+                <div className="stack" style={{ gap: "0.75rem" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <strong>Video task</strong>
+                    <Link
+                      to={`/admin/topics/${selected.id}`}
+                      className="btn btn--secondary btn--sm"
+                    >
+                      Open topic →
+                    </Link>
+                  </div>
+                  <p className="pageSub" style={{ margin: 0 }}>
+                    Video status: {selected.video_state.toLowerCase()}
+                  </p>
+                  <PostTaskForm topic={selected} onPosted={load} />
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {panelMode === "archived" && (
+          <div className={styles.editorContent}>
+            <div className={styles.editorHeader}>
+              <span className={styles.editorHeading}>Archived topics</span>
+            </div>
+            {archived.length === 0 ? (
+              <p className="pageSub">No archived topics.</p>
+            ) : (
+              <div className="stack" style={{ gap: "0.5rem" }}>
+                {archived.map((t) => (
+                  <div
+                    key={t.id}
+                    style={{
+                      display: "flex",
+                      gap: "0.6rem",
+                      alignItems: "center",
+                      padding: "0.5rem 0.7rem",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-sm)",
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <strong>{t.name}</strong>{" "}
+                      <span className="pill pill--stone">
+                        {t.level_type.toLowerCase()}
+                      </span>
+                      {t.breadcrumb.length > 0 && (
+                        <div className="pageSub">
+                          {t.breadcrumb.map((b) => b.name).join(" › ")}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      className="btn btn--secondary btn--sm"
+                      onClick={() => restore(t.id)}
+                    >
+                      Restore
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </section>
     </div>
   );
-
-  async function handleReorder(parentId: number | null, orderedIds: number[]) {
-    try {
-      await topicsApi.reorder(parentId, orderedIds);
-      await load();
-    } catch (e) {
-      console.error("Failed to reorder", e);
-    }
-  }
 }
 
 /* ── Breadcrumb ─────────────────────────── */

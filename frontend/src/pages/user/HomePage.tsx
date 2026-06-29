@@ -9,22 +9,22 @@ const ROLE_LABEL: Record<string, string> = {
 
 const SHORTCUTS = [
   {
-    to: "/upload",
+    to: "/tasks",
     icon: "↑",
-    title: "Upload a video",
-    desc: "Publish a new lesson to the library.",
+    title: "My tasks",
+    desc: "Upload videos or captions for topics assigned to you.",
   },
   {
     to: "/videos",
     icon: "▦",
-    title: "Video lessons",
-    desc: "Browse the published lesson library.",
+    title: "Videos uploaded",
+    desc: "Browse the lessons that have been recorded.",
   },
   {
     to: "/topics",
     icon: "◈",
     title: "Subjects & topics",
-    desc: "Explore the curriculum by subject and topic.",
+    desc: "Explore the curriculum by subject, module, chapter and topic.",
   },
 ];
 
