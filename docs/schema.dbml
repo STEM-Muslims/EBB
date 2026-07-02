@@ -1,0 +1,154 @@
+// schema.dbml
+// ============================================================
+// SHOWCASE / DOCS ONLY — NOT FUNCTIONAL
+// ------------------------------------------------------------
+// This is a hand-maintained diagram of the EBB database, kept
+// here purely to visualise the schema (paste into dbdiagram.io).
+// Nothing reads this file at build or run time.
+//
+// The SQLModel classes in backend/app/models/ are the single
+// source of truth; the live schema is created/migrated by
+// Alembic (backend/alembic/versions/). If the models change,
+// update this file by hand — it will not drift on its own and
+// it is not validated against anything.
+// ============================================================
+
+// ============================================================
+// CONTENT HIERARCHY
+// ------------------------------------------------------------
+// A single self-referential `topic` table holds the whole tree.
+// `level_type` distinguishes the 3 levels; `parent_id` builds
+// the tree; `prev_id`/`next_id` are a doubly-linked list that
+// orders siblings (with `sort_order` as a legacy fallback).
+// Source: backend/app/models/topic.py
+// ============================================================
+
+Table topic {
+  id          int          [pk, increment]
+  name        varchar      [not null, note: 'display name']
+  level_type  varchar      [not null, note: "enum LevelType: 'SUBJECT' | 'TOPIC' | 'VIDEO'"]
+  parent_id   int          [ref: > topic.id, null, note: 'NULL for SUBJECT (top level)']
+  sort_order  int          [not null, default: 0, note: 'legacy fallback ordering']
+  notes       text         [null]
+  is_active   boolean      [not null, default: true, note: 'soft-delete flag']
+  prev_id     int          [ref: > topic.id, null, note: 'linked-list: previous sibling']
+  next_id     int          [ref: > topic.id, null, note: 'linked-list: next sibling']
+  created_at  timestamp    [not null, default: `now()`]
+  updated_at  timestamp    [not null, default: `now()`]
+
+  Note {
+    '''
+    self-referential tree, 3 levels via level_type:
+      SUBJECT (no parent) -> TOPIC -> VIDEO (leaf).
+    sibling order is a doubly-linked list (prev_id/next_id).
+    deletes are soft (is_active = false).
+    '''
+  }
+}
+
+// ============================================================
+// USERS, ROLES & AUTH
+// ------------------------------------------------------------
+// Admin access is the `is_admin` column (no email whitelist).
+// Sign-in is Google OAuth (google_id) or email/password
+// (hashed_password). Roles are an enum, granted per user.
+// Source: backend/app/models/user.py, role.py
+// ============================================================
+
+Table user {
+  id               int          [pk, increment]
+  email            varchar      [not null, unique, note: 'login identifier']
+  hashed_password  varchar      [null, note: 'bcrypt hash — null for Google-only accounts']
+  google_id        varchar      [null, note: 'Google OAuth subject, set on first login']
+  is_admin         boolean      [default: false, note: 'sole source of admin access']
+
+  Note: 'every provisioned account; admins, teachers, translators'
+}
+
+Table userrole {
+  id       int     [pk, increment]
+  user_id  int     [ref: > user.id, not null]
+  role     varchar [not null, note: "enum RoleType: 'TEACHER' | 'TRANSLATOR'"]
+
+  indexes {
+    (user_id, role) [unique, name: 'uq_user_role']
+  }
+
+  Note: 'M:N — a user may hold multiple roles (e.g. TEACHER and TRANSLATOR)'
+}
+
+// ============================================================
+// LANGUAGES & TRANSLATOR / TEACHER LINKS
+// ------------------------------------------------------------
+// Source: backend/app/models/language.py, user_language.py,
+//         user_subject.py
+// ============================================================
+
+Table language {
+  id          int          [pk, increment]
+  name        varchar      [not null, unique, note: 'e.g. English, Arabic, Somali']
+  code        varchar      [null, note: 'e.g. en, ar, so']
+  is_active   boolean      [not null, default: true, note: 'soft-delete flag']
+  created_at  timestamp    [not null, default: `now()`]
+  updated_at  timestamp    [not null, default: `now()`]
+
+  Note: 'supported translation languages'
+}
+
+Table userlanguage {
+  id           int [pk, increment]
+  user_id      int [ref: > user.id, not null]
+  language_id  int [ref: > language.id, not null]
+
+  indexes {
+    (user_id, language_id) [unique, name: 'uq_user_language']
+  }
+
+  Note: 'M:N — links a TRANSLATOR to the languages they translate into'
+}
+
+Table userteachingsubject {
+  id        int [pk, increment]
+  user_id   int [ref: > user.id, not null]
+  topic_id  int [ref: > topic.id, not null, note: 'a SUBJECT-level topic']
+
+  indexes {
+    (user_id, topic_id) [unique, name: 'uq_user_teaching_subject']
+  }
+
+  Note: 'M:N — links a TEACHER to the SUBJECT topics they teach'
+}
+
+// ============================================================
+// VIDEOS
+// ------------------------------------------------------------
+// One upload is published to S3 + YouTube and recorded here.
+// NOTE: in the current schema a video is NOT foreign-keyed to a
+// topic — `uploaded_by` is the admin's email, and status tracks
+// how far the S3/YouTube pipeline got.
+// Source: backend/app/models/video.py
+// ============================================================
+
+Table video {
+  id                int          [pk, increment]
+  title             varchar      [not null]
+  description       text         [not null, default: '']
+  privacy_status    varchar      [not null, default: 'unlisted', note: 'YouTube privacy']
+  s3_key            varchar      [null, note: 'object key inside the S3 bucket']
+  s3_url            varchar      [null, note: 'raw S3 link — hidden from non-admins in API']
+  youtube_video_id  varchar      [null]
+  youtube_url       varchar      [null]
+  uploaded_by       varchar      [null, note: "uploader's email; only they (or an admin) can remove it"]
+  status            varchar      [not null, default: 'PENDING', note: "enum VideoStatus: 'PENDING' | 'S3_UPLOADED' | 'COMPLETED' | 'FAILED'"]
+  error             text         [null, note: 'human-readable summary of any failed step']
+  created_at        timestamp    [not null, default: `now()`]
+  updated_at        timestamp    [not null, default: `now()`]
+
+  Note {
+    '''
+    physical file lives in S3 and on YouTube — this table holds
+    metadata + pipeline status. each upload is independent: a
+    failure in one destination does not block the others.
+    '''
+  }
+}

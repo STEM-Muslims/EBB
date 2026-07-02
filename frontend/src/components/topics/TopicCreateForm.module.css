@@ -1,0 +1,125 @@
+﻿.form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+}
+
+.formHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.formTitle {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+}
+
+.badgeSUBJECT {
+    background: #e8e4ff;
+    color: #3d2fa0;
+}
+.badgeTOPIC {
+    background: #e0f2ee;
+    color: #0f6e56;
+}
+.badgeVIDEO {
+    background: #fdf0e0;
+    color: #854f0b;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+}
+
+.input {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 7px 10px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+}
+
+.input:focus {
+    border-color: var(--brand);
+}
+
+.textarea {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 7px 10px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+    resize: vertical;
+    width: 100%;
+    line-height: 1.5;
+}
+
+.textarea:focus {
+    border-color: var(--brand);
+}
+
+.error {
+    font-size: 12px;
+    color: var(--danger);
+}
+
+.btn {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    align-self: flex-start;
+    transition:
+        background 0.1s,
+        border-color 0.1s;
+}
+
+.btn:hover {
+    background: var(--brand);
+    color: var(--surface);
+    border-color: var(--brand);
+}
+
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.blocked {
+    padding: 12px 14px;
+    background: var(--bg);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+}
+

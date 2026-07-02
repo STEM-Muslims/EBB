@@ -1,0 +1,176 @@
+﻿.editor {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.05em;
+}
+
+.badgeSUBJECT {
+    background: #e8e4ff;
+    color: #3d2fa0;
+}
+.badgeTOPIC {
+    background: #e0f2ee;
+    color: #0f6e56;
+}
+.badgeVIDEO {
+    background: #fdf0e0;
+    color: #854f0b;
+}
+
+.idTag {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.unsaved {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.input {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--surface);
+    transition: border-color 0.15s;
+    outline: none;
+    width: 100%;
+}
+
+.input:focus {
+    border-color: var(--brand);
+}
+
+.textarea {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--surface);
+    transition: border-color 0.15s;
+    outline: none;
+    width: 100%;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.textarea:focus {
+    border-color: var(--brand);
+}
+
+.error {
+    font-size: 13px;
+    color: var(--danger);
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btnPrimary {
+    background: var(--brand);
+    color: var(--surface);
+    border: 1px solid var(--brand);
+    border-radius: var(--radius-md);
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: opacity 0.1s;
+}
+
+.btnPrimary:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.btnDanger {
+    background: none;
+    color: var(--danger);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 7px 16px;
+    font-size: 13px;
+    transition:
+        border-color 0.15s,
+        color 0.15s;
+}
+
+.btnDanger:hover {
+    border-color: var(--danger);
+}
+
+.btnDangerConfirm {
+    background: var(--danger);
+    color: white;
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-md);
+    padding: 7px 14px;
+    font-size: 13px;
+}
+
+.btnGhost {
+    background: none;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 7px 14px;
+    font-size: 13px;
+}
+
+.confirmRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.confirmText {
+    font-size: 13px;
+    color: var(--danger);
+    font-weight: 500;
+}
+

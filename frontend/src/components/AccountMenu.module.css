@@ -1,0 +1,205 @@
+.root {
+    position: relative;
+    flex-shrink: 0;
+}
+
+/* ---- Trigger (avatar + chevron) ---------------------------------------- */
+.trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.4rem 0.25rem 0.25rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.75);
+    transition:
+        background var(--dur) var(--ease),
+        border-color var(--dur) var(--ease);
+}
+.trigger:hover,
+.trigger[aria-expanded="true"] {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.16);
+}
+.trigger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--brand-darker), 0 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--brand-light);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+    flex-shrink: 0;
+}
+.avatarImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.avatarInitial {
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    line-height: 1;
+}
+.chevron {
+    color: rgba(255, 255, 255, 0.7);
+    transition: transform var(--dur) var(--ease);
+}
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+/* ---- Dropdown ---------------------------------------------------------- */
+.menu {
+    position: absolute;
+    top: calc(100% + 0.55rem);
+    right: 0;
+    z-index: 1200;
+    width: 264px;
+    padding: 0.4rem;
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-pop);
+    transform-origin: top right;
+    animation: menuIn 0.14s var(--ease);
+}
+@keyframes menuIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.6rem 0.65rem 0.75rem;
+}
+.profileAvatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--brand);
+    flex-shrink: 0;
+}
+.profileAvatar .avatarInitial {
+    font-size: 1.05rem;
+}
+.profileText {
+    min-width: 0;
+}
+.profileEmail {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-h);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.profileRoles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.35rem;
+}
+.roleChip {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.12rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--brand-soft);
+    color: var(--brand);
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.divider {
+    height: 1px;
+    margin: 0.35rem 0.3rem;
+    background: var(--border);
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.55rem 0.65rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+    transition:
+        background var(--dur) var(--ease),
+        color var(--dur) var(--ease);
+}
+.item:hover {
+    background: var(--cream);
+    color: var(--text-h);
+}
+.item:disabled {
+    opacity: 0.55;
+    cursor: default;
+    background: transparent;
+}
+.itemIcon {
+    display: inline-flex;
+    width: 18px;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+.item:hover .itemIcon {
+    color: var(--brand);
+}
+.itemDanger {
+    color: var(--danger);
+}
+.itemDanger:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+.itemDanger:hover .itemIcon {
+    color: var(--danger);
+}
+
+.error {
+    margin: 0.1rem 0.3rem 0.4rem;
+    padding: 0.4rem 0.55rem;
+    font-size: 0.78rem;
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-radius: var(--radius-sm);
+}
+
+.fileInput {
+    display: none;
+}

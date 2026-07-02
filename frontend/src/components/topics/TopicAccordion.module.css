@@ -1,0 +1,142 @@
+.tree,
+.subtree {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.empty {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 12px 16px;
+}
+
+.item {
+    user-select: none;
+    margin: 3px 0;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    transition: background 0.1s;
+    line-height: 1.4;
+}
+
+.row:hover {
+    background: var(--bg);
+}
+
+.selected {
+    background: var(--brand-soft);
+}
+
+.chevron {
+    background: none;
+    border: none;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.chevron span {
+    display: inline-block;
+    font-size: 8px;
+    transition: transform 0.15s ease;
+}
+
+.label {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+}
+
+.levelTag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    background: var(--cream);
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.levelTag[data-level="SUBJECT"] {
+    background: var(--brand-soft);
+    color: var(--brand-darker);
+}
+
+.levelTag[data-level="MODULE"] {
+    background: #e8e4ff;
+    color: #3d2fa0;
+}
+
+.levelTag[data-level="CHAPTER"] {
+    background: #e0f2ee;
+    color: #0f6e56;
+}
+
+.levelTag[data-level="TOPIC"] {
+    background: #fdf0e0;
+    color: #854f0b;
+}
+
+.name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.videoState {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: var(--radius-pill);
+    flex-shrink: 0;
+    background: var(--stone);
+    color: var(--text-muted);
+}
+
+.videoState[data-state="ASSIGNED"] {
+    background: #fdf0e0;
+    color: #854f0b;
+}
+
+.videoState[data-state="COMPLETED"] {
+    background: #e0f2ee;
+    color: #0f6e56;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.subtree {
+    margin-left: 7px;
+    border-left: 1px solid var(--border);
+}

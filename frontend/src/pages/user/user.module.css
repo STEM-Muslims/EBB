@@ -1,0 +1,240 @@
+.roleRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* ---- Home: quick actions ---- */
+.sectionLabel {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 1rem;
+}
+.shortcutGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+.shortcut {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    color: inherit;
+}
+.shortcutIcon {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    font-size: 1.15rem;
+}
+.shortcutBody {
+    min-width: 0;
+    flex: 1;
+}
+.shortcutTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-h);
+    margin: 0 0 0.2rem;
+}
+.shortcutDesc {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
+}
+.shortcutArrow {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    transform: translateX(-4px);
+    opacity: 0;
+    transition:
+        transform var(--dur) var(--ease),
+        opacity var(--dur) var(--ease),
+        color var(--dur) var(--ease);
+}
+.shortcut:hover .shortcutArrow {
+    opacity: 1;
+    transform: translateX(0);
+    color: var(--brand);
+}
+
+/* Video list */
+.videoList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+.videoCard {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+.videoThumb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-sm);
+    background: var(--brand-soft);
+    color: var(--brand);
+    font-size: 1rem;
+}
+.videoInfo {
+    min-width: 0;
+    flex: 1;
+}
+.skeletonCard {
+    height: 84px;
+    border: 1px solid var(--border);
+    background: linear-gradient(
+        100deg,
+        var(--surface) 30%,
+        var(--cream) 50%,
+        var(--surface) 70%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.3s ease-in-out infinite;
+}
+@keyframes shimmer {
+    from {
+        background-position: 200% 0;
+    }
+    to {
+        background-position: -200% 0;
+    }
+}
+.videoTitle {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--brand-darker);
+    font-size: 1.15rem;
+    margin: 0 0 0.35rem;
+}
+.videoDesc {
+    color: var(--text-secondary);
+    margin: 0 0 0.6rem;
+    font-size: 0.95rem;
+}
+.videoMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+.videoActions {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+/* Filter toggle (shared by admin + non-admin video tabs) */
+.filterOn {
+    background: var(--brand-soft);
+    border-color: var(--brand-light);
+    color: var(--brand-darker);
+}
+
+/* Admin video-tab extras */
+.videoStatus {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+.videoLink {
+    color: var(--text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.notice {
+    color: var(--success);
+    font-size: 0.9rem;
+    margin: 0 0 1rem;
+}
+.errorMsg {
+    color: var(--danger);
+    font-size: 0.9rem;
+    margin: 0 0 1rem;
+}
+.btnRemove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0.4rem 0.85rem;
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        border-color var(--dur) var(--ease),
+        background var(--dur) var(--ease),
+        color var(--dur) var(--ease);
+}
+.btnRemove:hover:not(:disabled) {
+    border-color: var(--danger);
+}
+.btnRemove:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Topic tree */
+.tree {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.subtree {
+    list-style: none;
+    margin: 0.4rem 0 0;
+    padding-left: 1.25rem;
+    border-left: 2px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.node {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.nodeName {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+.levelTag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--cream);
+    color: var(--text-muted);
+}
+.levelTag[data-level="SUBJECT"] {
+    background: var(--brand-soft);
+    color: var(--brand-darker);
+}
+.levelTag[data-level="VIDEO"] {
+    background: var(--stone);
+    color: var(--brand-darker);
+}

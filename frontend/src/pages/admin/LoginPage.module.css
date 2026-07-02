@@ -1,0 +1,103 @@
+.page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: var(--canvas);
+}
+
+.card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-elevated);
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.head {
+    text-align: center;
+}
+.logoImg {
+    display: block;
+    width: 180px;
+    height: auto;
+    margin: 0 auto 0.5rem;
+}
+.title {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.error {
+    background: var(--danger-soft);
+    border: 1px solid rgba(179, 38, 30, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1rem;
+    color: var(--danger);
+    font-size: 0.9rem;
+    text-align: center;
+    margin: 0;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: var(--tap-target);
+    padding: 0.7rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    color: var(--text-primary);
+    font-weight: 600;
+    transition:
+        background var(--dur) var(--ease),
+        border-color var(--dur) var(--ease);
+}
+.google:hover {
+    background: var(--cream);
+    border-color: var(--brand);
+    color: var(--text-primary);
+}

@@ -1,0 +1,114 @@
+/* ============================================================================
+   EBB Design Tokens
+   ----------------------------------------------------------------------------
+   Single source of truth for the visual language, adapted from the STEM Muslims
+   design spec but enriched: muted sage -> emerald, muted teal-blue -> deep
+   ocean, olive-gold -> warm bronze-gold, neutrals warmed and deepened.
+
+   Both the admin UI and the public (non-admin) UI consume these variables, so
+   restyling happens here, once.
+   ========================================================================== */
+
+:root {
+    color-scheme: light;
+
+    /* ---- Brand: deep emerald (matched to the EBB logo) -------------------- */
+    --brand: #14543b; /* primary brand — deep emerald          */
+    --brand-light: #1d7350; /* hover / lighter accent                */
+    --brand-lighter: #7ba99b; /* sage accent (the logo globe tone)     */
+    --brand-darker: #0e3f2c; /* deepest shade (top bar)               */
+    --brand-soft: rgba(20, 84, 59, 0.1); /* tint fills            */
+    --brand-soft-strong: rgba(20, 84, 59, 0.18);
+
+    /* ---- Accents ---------------------------------------------------------- */
+    --gold: #b5832a; /* warm bronze-gold accent  (was #917849) */
+    --gold-soft: rgba(181, 131, 42, 0.14);
+    --link: #0e4d6b; /* deep ocean link text     (was #1a5978) */
+
+    /* ---- Neutrals (green-tinted near-white; no warm cream) --------------- */
+    --cream: #ecf4f0; /* subtle fills / icon backgrounds       */
+    --stone: #d3e2db; /* hover backgrounds                     */
+    --canvas: #f4f8f6; /* app canvas                            */
+    --surface: #ffffff; /* cards / panels / sidebar              */
+    --bg: #f4f8f6; /* page/app background                    */
+    --paper: #ffffff; /* true white                            */
+
+    /* ---- Text ------------------------------------------------------------ */
+    --text: #1f2421; /* body text                (was #333333) */
+    --text-primary: #1f2421;
+    --text-secondary: #45504a;
+    --text-muted: #7c857f;
+    --text-h: #15201b; /* headings (dark)                       */
+    --text-on-brand: #ffffff;
+
+    /* ---- Borders --------------------------------------------------------- */
+    --border: #e1ebe6; /* cool green-tinted hairline            */
+    --border-strong: #cbdbd3;
+
+    /* ---- Status ---------------------------------------------------------- */
+    --success: #157f4b;
+    --success-soft: rgba(21, 127, 75, 0.12);
+    --danger: #b3261e;
+    --danger-soft: rgba(179, 38, 30, 0.1);
+
+    /* ---- Legacy aliases (consumed by existing modules) ------------------- */
+    --accent: var(--brand);
+    --accent-bg: var(--brand-soft);
+    --accent-border: rgba(14, 124, 90, 0.45);
+    --code-bg: var(--cream);
+    --social-bg: rgba(244, 236, 225, 0.6);
+
+    /* ---- Typography ------------------------------------------------------ */
+    --font-sans:
+        "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    /* Headings use the same clean sans — kept plain and understated. */
+    --font-display: var(--font-sans);
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    /* legacy aliases */
+    --sans: var(--font-sans);
+    --heading: var(--font-sans);
+    --mono: var(--font-mono);
+
+    /* Fluid type scale (clamp) from the spec */
+    --fs-h1: clamp(2rem, 4vw, 3rem);
+    --fs-h2: clamp(1.5rem, 3vw, 2.5rem);
+    --fs-h3: clamp(1.25rem, 2.5vw, 2rem);
+    --fs-body: clamp(0.95rem, 1.2vw, 1.1rem);
+    --fw-h1: 700;
+    --fw-h2: 600;
+    --fw-h3: 500;
+
+    /* ---- Spacing & layout ----------------------------------------------- */
+    --max-width: 1200px;
+    --pad-x: 1.5rem; /* page gutter (1rem on mobile)          */
+    --section-y: 5rem; /* desktop section rhythm (3/2rem down)  */
+    --grid-gap: 2rem;
+    --sidebar-width: 244px;
+    --navbar-height: 72px;
+    --tap-target: 44px;
+
+    /* ---- Radii ----------------------------------------------------------- */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-pill: 30px;
+
+    /* ---- Shadows (Linear-style restraint: hairline-led, subtle depth) ---- */
+    --shadow-xs: 0 1px 2px rgba(20, 33, 27, 0.06);
+    --shadow-card:
+        0 1px 2px rgba(20, 33, 27, 0.04), 0 1px 3px rgba(20, 33, 27, 0.06);
+    --shadow-elevated:
+        0 1px 2px rgba(20, 33, 27, 0.04), 0 8px 24px -6px rgba(20, 33, 27, 0.14);
+    --shadow-pop:
+        0 2px 4px rgba(20, 33, 27, 0.06), 0 12px 32px -8px rgba(20, 33, 27, 0.22);
+    --shadow-brand: 0 6px 18px -4px rgba(14, 124, 90, 0.32);
+    --shadow-nav: 0 1px 0 rgba(255, 255, 255, 0.04);
+    /* Focus ring (soft brand halo, reused across interactive elements) */
+    --ring: 0 0 0 3px var(--brand-soft);
+    /* legacy alias */
+    --shadow: var(--shadow-card);
+
+    /* ---- Motion ---------------------------------------------------------- */
+    --dur: 0.25s;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}

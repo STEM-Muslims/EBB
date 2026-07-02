@@ -1,0 +1,153 @@
+.shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ---- Top navigation bar (slim, dark, hairline-led) ---- */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    padding: 0 clamp(1rem, 3vw, 1.75rem);
+    min-height: var(--navbar-height);
+    background: var(--brand-darker);
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: var(--shadow-nav);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+}
+.logoImg {
+    height: 38px;
+    width: auto;
+    display: block;
+}
+.brandLabel {
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+    padding-left: 0.7rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* ---- Nav links (horizontal) ---- */
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    flex: 1;
+    flex-wrap: wrap;
+}
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: var(--radius-sm);
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.875rem;
+    font-weight: 500;
+    /* reset for when .navItem is rendered as a <button> (dropdown trigger) */
+    border: none;
+    background: none;
+    font-family: inherit;
+    cursor: pointer;
+    transition:
+        background var(--dur) var(--ease),
+        color var(--dur) var(--ease);
+}
+.navItem:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+.navItemActive {
+    background: rgba(255, 255, 255, 0.13);
+    color: #fff;
+}
+.navIcon {
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    opacity: 0.85;
+}
+
+/* ---- Nav dropdown ---- */
+.navDropdown {
+    position: relative;
+}
+.navCaret {
+    font-size: 0.6rem;
+    opacity: 0.7;
+    margin-left: 0.1rem;
+}
+.navMenu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 180px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    padding: 4px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.navMenuItem {
+    display: block;
+    padding: 0.5rem 0.7rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.navMenuItem:hover {
+    background: var(--bg);
+}
+.navMenuItemActive {
+    background: var(--brand-soft);
+    color: var(--brand-darker);
+}
+
+/* ---- Account (right side) ---- */
+.account {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* ---- Main content ---- */
+.main {
+    flex: 1;
+    min-width: 0;
+    background: var(--canvas);
+}
+
+@media (max-width: 768px) {
+    .brandLabel {
+        display: none;
+    }
+    .nav {
+        order: 3;
+        flex: 1 1 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+    .account {
+        margin-left: auto;
+    }
+}

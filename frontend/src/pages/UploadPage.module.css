@@ -1,0 +1,143 @@
+/* Upload-specific styling. Layout, cards, inputs and buttons reuse the shared
+   component classes (.pageWrap / .card / .input / .btn …); only the file
+   dropzone and per-step result readout live here. */
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+}
+
+/* ---- File dropzone ---- */
+.dropzone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 1.75rem 1rem;
+    text-align: center;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--canvas);
+    cursor: pointer;
+    transition:
+        border-color var(--dur) var(--ease),
+        background var(--dur) var(--ease);
+}
+.dropzone:hover {
+    border-color: var(--brand-light);
+    background: var(--cream);
+}
+.dropzoneFilled {
+    border-style: solid;
+    border-color: var(--brand-lighter);
+    background: var(--brand-soft);
+}
+.fileInput {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.dropIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--brand);
+    box-shadow: var(--shadow-xs);
+    font-size: 1.1rem;
+}
+.dropMain {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-h);
+    word-break: break-all;
+}
+.dropSub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* ---- Actions ---- */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
+}
+
+/* ---- Status ---- */
+.error {
+    font-size: 0.85rem;
+    color: var(--danger);
+    margin: 0;
+}
+
+.successBox {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--canvas);
+}
+.successBox[data-ok="true"] {
+    border-color: var(--success-soft);
+    background: var(--success-soft);
+}
+.successBox[data-ok="false"] {
+    border-color: var(--danger-soft);
+    background: var(--danger-soft);
+}
+
+.successText {
+    font-size: 0.875rem;
+    color: var(--success);
+    font-weight: 600;
+    margin: 0;
+}
+
+.youtubeLink {
+    font-size: 0.85rem;
+    color: var(--link);
+    word-break: break-all;
+}
+
+/* ---- Per-step results ---- */
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.step {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+}
+.stepName {
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 72px;
+}
+.stepOk {
+    color: var(--success);
+}
+.stepFail {
+    color: var(--danger);
+    word-break: break-word;
+}
