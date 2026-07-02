@@ -24,6 +24,7 @@ export interface Topic {
   s3_url: string | null;
   youtube_video_id: string | null;
   youtube_url: string | null;
+  youtube_privacy_status: string | null;
   uploaded_by: string | null;
   video_error: string | null;
   video_uploaded_at: string | null;
@@ -71,6 +72,7 @@ export interface TaskView extends Task {
 /** A completed topic as returned by GET /topics/completed. */
 export interface CompletedTopic extends Topic {
   breadcrumb: Breadcrumb[];
+  translated_languages: Language[];
 }
 
 /** An archived topic as returned by GET /topics/archived. */
@@ -86,6 +88,7 @@ export interface TopicDetail {
   topic: Topic;
   breadcrumb: Breadcrumb[];
   tasks: TopicDetailTask[];
+  translated_languages: Language[];
 }
 
 export interface StepResult {

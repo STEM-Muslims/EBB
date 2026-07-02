@@ -37,7 +37,7 @@ export default function TopicDetailPage() {
   if (status === "error" || !detail)
     return <p className="emptyState">Couldn’t load this topic.</p>;
 
-  const { topic, breadcrumb, tasks } = detail;
+  const { topic, breadcrumb, tasks, translated_languages } = detail;
   const recordingTask = tasks.find(
     (t) => t.task_type === "RECORDING" && t.status === "IN_PROGRESS",
   );
@@ -102,6 +102,35 @@ export default function TopicDetailPage() {
             replacing={topic.video_state === "COMPLETED"}
           />
         )}
+        {topic.video_state === "COMPLETED" && topic.youtube_video_id && (
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <span className="pill pill--stone">
+              YouTube: {topic.youtube_privacy_status ?? "unknown"}
+            </span>
+            {isAdmin && topic.youtube_privacy_status !== "public" && (
+              <button
+                className="btn btn--sm"
+                onClick={async () => {
+                  await topicsApi.updateYoutubePrivacy(topic.id, "public");
+                  load();
+                }}
+              >
+                Make public on YouTube
+              </button>
+            )}
+            {isAdmin && topic.youtube_privacy_status === "public" && (
+              <button
+                className="btn btn--secondary btn--sm"
+                onClick={async () => {
+                  await topicsApi.updateYoutubePrivacy(topic.id, "unlisted");
+                  load();
+                }}
+              >
+                Make unlisted
+              </button>
+            )}
+          </div>
+        )}
         {isAdmin && topic.video_state === "COMPLETED" && (
           <button
             className="btn btn--secondary btn--sm"
@@ -120,7 +149,18 @@ export default function TopicDetailPage() {
         className="card card--pad-lg stack"
         style={{ gap: "1rem", marginTop: "1rem" }}
       >
-        <h3 style={{ margin: 0 }}>Translations</h3>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={{ margin: 0 }}>Translations</h3>
+          {translated_languages.length > 0 && (
+            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+              {translated_languages.map((lang) => (
+                <span key={lang.id} className="pill pill--stone">
+                  {lang.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
         {translations.length === 0 && (
           <p className="pageSub">No translation tasks yet.</p>
         )}

@@ -114,4 +114,13 @@ export const topicsApi = {
     request<{ success: boolean; message: string }>(`/topics/${topicId}/video`, {
       method: "DELETE",
     }),
+
+  updateYoutubePrivacy: (
+    topicId: number,
+    privacy_status: "public" | "unlisted" | "private",
+  ) =>
+    request<Topic>(`/topics/${topicId}/youtube-privacy`, {
+      method: "PATCH",
+      body: JSON.stringify({ privacy_status }),
+    }),
 };

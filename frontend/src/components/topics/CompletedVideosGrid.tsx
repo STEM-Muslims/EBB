@@ -116,7 +116,19 @@ export default function CompletedVideosGrid({
                     <span>Added {formatDate(t.video_uploaded_at)}</span>
                   )}
                   {isAdmin && t.s3_url && <span>S3 available</span>}
+                  {t.youtube_privacy_status && (
+                    <span>YouTube: {t.youtube_privacy_status}</span>
+                  )}
                 </div>
+                {t.translated_languages.length > 0 && (
+                  <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
+                    {t.translated_languages.map((lang) => (
+                      <span key={lang.id} className="pill pill--stone" style={{ fontSize: "0.7rem" }}>
+                        {lang.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className={styles.videoActions}>
                 <span className="btn btn--sm">Open</span>
