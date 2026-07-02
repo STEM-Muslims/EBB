@@ -10,6 +10,8 @@ interface MeResponse {
   is_admin: boolean;
   avatar_url: string | null;
   roles: RoleType[];
+  teaching_subject_ids: number[];
+  language_ids: number[];
 }
 
 export function storeAdminToken(token: string) {
@@ -20,6 +22,8 @@ export function useAdmin() {
   const [email, setEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [roles, setRoles] = useState<RoleType[]>([]);
+  const [teachingSubjectIds, setTeachingSubjectIds] = useState<number[]>([]);
+  const [languageIds, setLanguageIds] = useState<number[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -39,6 +43,8 @@ export function useAdmin() {
         setEmail(data.email);
         setIsAdmin(Boolean(data.is_admin));
         setRoles(data.roles ?? []);
+        setTeachingSubjectIds(data.teaching_subject_ids ?? []);
+        setLanguageIds(data.language_ids ?? []);
         setAvatarUrl(data.avatar_url ?? null);
       })
       .catch(() => {
@@ -53,5 +59,14 @@ export function useAdmin() {
     navigate("/admin/login", { replace: true });
   }
 
-  return { email, isAdmin, roles, avatarUrl, loading, logout };
+  return {
+    email,
+    isAdmin,
+    roles,
+    teachingSubjectIds,
+    languageIds,
+    avatarUrl,
+    loading,
+    logout,
+  };
 }

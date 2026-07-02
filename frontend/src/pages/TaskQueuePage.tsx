@@ -12,6 +12,7 @@ export default function TaskQueuePage() {
 
   const [hasActive, setHasActive] = useState(false);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [queue, setQueue] = useState<TaskView[]>([]);
 
   const [offer, setOffer] = useState<TaskView[] | null>(null);
   const [offerIdx, setOfferIdx] = useState(0);
@@ -28,8 +29,17 @@ export default function TaskQueuePage() {
     }
   }
 
+  async function loadQueue() {
+    try {
+      setQueue(await tasksApi.getFullQueue());
+    } catch {
+      /* keep whatever we had */
+    }
+  }
+
   useEffect(() => {
     refreshActive();
+    loadQueue();
   }, []);
 
   const current = offer && offerIdx < offer.length ? offer[offerIdx] : null;
@@ -60,6 +70,7 @@ export default function TaskQueuePage() {
       setOfferIdx(0);
       setOfferMsg("Task accepted — find it under In-progress.");
       await refreshActive();
+      await loadQueue();
     } catch (e) {
       setOfferMsg(e instanceof Error ? e.message : "Couldn’t take that task.");
       reject();
@@ -87,8 +98,9 @@ export default function TaskQueuePage() {
           <span className="pageEyebrow">Tasks</span>
           <h1>Task queue</h1>
           <p className="pageSub">
-            Pick up the next task you can do. Accept it to start, or reject to see
-            the next one.
+            Everything currently in the queue is listed below. Hit “Get new task”
+            to be offered the next one you can do — accept to start, or reject to
+            see the next.
           </p>
         </div>
         <div className="pageActions">
@@ -142,6 +154,53 @@ export default function TaskQueuePage() {
       )}
 
       {!current && offerMsg && <p className="emptyState">{offerMsg}</p>}
+
+      {/* ── Full queue (visibility only; claim via "Get new task") ── */}
+      {status === "ready" && (
+        <div className="stack" style={{ gap: "0.6rem", marginTop: "1.5rem" }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+          >
+            <h2 style={{ margin: 0, fontSize: "1.05rem" }}>In the queue</h2>
+            <span className="pill pill--stone">{queue.length}</span>
+          </div>
+
+          {queue.length === 0 ? (
+            <p className="pageSub" style={{ margin: 0 }}>
+              The queue is empty right now.
+            </p>
+          ) : (
+            queue.map((t) => (
+              <div
+                key={t.id}
+                className="card"
+                style={{
+                  display: "flex",
+                  gap: "0.6rem",
+                  alignItems: "center",
+                  padding: "0.7rem 0.9rem",
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "0.5rem",
+                      alignItems: "center",
+                    }}
+                  >
+                    <strong>{t.topic_name}</strong>
+                    <span className="pill pill--stone">{kindLabel(t)}</span>
+                  </div>
+                  <p className="pageSub" style={{ margin: 0 }}>
+                    {crumbText(t)}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }

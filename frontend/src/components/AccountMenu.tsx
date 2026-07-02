@@ -1,15 +1,49 @@
 import { useEffect, useRef, useState } from "react";
 import { avatarApi, type RoleType } from "../api/users";
+import { topicsApi } from "../api/topics";
+import { languagesApi } from "../api/languages";
 import { downscaleToSquare } from "../lib/image";
 import styles from "./AccountMenu.module.css";
 
-const ROLE_LABEL: Record<string, string> = {
-  TEACHER: "Teacher",
-  TRANSLATOR: "Translator",
-};
-
 function initials(email: string) {
   return email.charAt(0).toUpperCase();
+}
+
+/** One role and the specific things the user holds under it. */
+function RoleLine({
+  label,
+  ids,
+  names,
+  loaded,
+  noun,
+}: {
+  label: string;
+  ids: number[];
+  names: string[];
+  loaded: boolean;
+  noun: string;
+}) {
+  const plural = ids.length === 1 ? noun : `${noun}s`;
+  return (
+    <div className={styles.roleRow}>
+      <span className={styles.roleChip}>{label}</span>
+      {ids.length === 0 ? (
+        <span className={styles.roleEmpty}>none assigned</span>
+      ) : loaded && names.length > 0 ? (
+        <span className={styles.roleTags}>
+          {names.map((n) => (
+            <span key={n} className={styles.roleTag}>
+              {n}
+            </span>
+          ))}
+        </span>
+      ) : (
+        <span className={styles.roleEmpty}>
+          {ids.length} {plural}
+        </span>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -21,12 +55,16 @@ function initials(email: string) {
 export default function AccountMenu({
   email,
   roles,
+  teachingSubjectIds,
+  languageIds,
   isAdmin,
   avatarUrl,
   onLogout,
 }: {
   email: string;
   roles: RoleType[];
+  teachingSubjectIds: number[];
+  languageIds: number[];
   isAdmin: boolean;
   avatarUrl: string | null;
   onLogout: () => void;
@@ -35,11 +73,37 @@ export default function AccountMenu({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(avatarUrl);
+  const [subjects, setSubjects] = useState<{ id: number; name: string }[] | null>(
+    null,
+  );
+  const [languages, setLanguages] = useState<
+    { id: number; name: string }[] | null
+  >(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const isTeacher = roles.includes("TEACHER");
+  const isTranslator = roles.includes("TRANSLATOR");
+
   // Keep in sync once /auth/me resolves (avatarUrl arrives asynchronously).
   useEffect(() => setAvatar(avatarUrl), [avatarUrl]);
+
+  // Resolve subject/language ids to names lazily, the first time the menu opens.
+  useEffect(() => {
+    if (!open) return;
+    if (isTeacher && subjects === null && teachingSubjectIds.length > 0) {
+      topicsApi
+        .getSubjects()
+        .then((s) => setSubjects(s.map((t) => ({ id: t.id, name: t.name }))))
+        .catch(() => setSubjects([]));
+    }
+    if (isTranslator && languages === null && languageIds.length > 0) {
+      languagesApi
+        .getAll()
+        .then((l) => setLanguages(l.map((x) => ({ id: x.id, name: x.name }))))
+        .catch(() => setLanguages([]));
+    }
+  }, [open, isTeacher, isTranslator]);
 
   // Close on outside click or Escape.
   useEffect(() => {
@@ -90,10 +154,12 @@ export default function AccountMenu({
     }
   }
 
-  const roleChips =
-    roles.length > 0
-      ? roles.map((r) => ROLE_LABEL[r] ?? r)
-      : [isAdmin ? "Administrator" : "Member"];
+  const subjectNames = (subjects ?? [])
+    .filter((s) => teachingSubjectIds.includes(s.id))
+    .map((s) => s.name);
+  const languageNames = (languages ?? [])
+    .filter((l) => languageIds.includes(l.id))
+    .map((l) => l.name);
 
   const avatarInner = avatar ? (
     <img src={avatar} alt="" className={styles.avatarImg} />
@@ -138,12 +204,35 @@ export default function AccountMenu({
               <span className={styles.profileEmail} title={email}>
                 {email}
               </span>
-              <div className={styles.profileRoles}>
-                {roleChips.map((c) => (
-                  <span key={c} className={styles.roleChip}>
-                    {c}
-                  </span>
-                ))}
+              <div className={styles.roleList}>
+                {isAdmin && (
+                  <div className={styles.roleRow}>
+                    <span className={styles.roleChip}>Administrator</span>
+                  </div>
+                )}
+                {isTeacher && (
+                  <RoleLine
+                    label="Teacher"
+                    ids={teachingSubjectIds}
+                    names={subjectNames}
+                    loaded={subjects !== null}
+                    noun="subject"
+                  />
+                )}
+                {isTranslator && (
+                  <RoleLine
+                    label="Translator"
+                    ids={languageIds}
+                    names={languageNames}
+                    loaded={languages !== null}
+                    noun="language"
+                  />
+                )}
+                {!isAdmin && !isTeacher && !isTranslator && (
+                  <div className={styles.roleRow}>
+                    <span className={styles.roleChip}>Member</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -56,6 +56,8 @@ export const tasksApi = {
 
   getQueue: () => request<TaskView[]>("/tasks/queue"),
 
+  getFullQueue: () => request<TaskView[]>("/tasks/queue/all"),
+
   getInProgress: () => request<TaskView[]>("/tasks/in-progress"),
 
   getMine: () => request<TaskView[]>("/tasks/mine"),

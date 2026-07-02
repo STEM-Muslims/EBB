@@ -50,13 +50,8 @@ export default function TopicCreateForm({
     }
   }
 
-  if (!canAdd) {
-    return (
-      <div className={styles.blocked}>
-        <p>Topics are the deepest level and cannot have children.</p>
-      </div>
-    );
-  }
+  // Leaf topics have no children — nothing to add here.
+  if (!canAdd) return null;
 
   return (
     <div className={styles.form}>

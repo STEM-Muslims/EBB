@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { topicsApi } from "../api/topics";
 import { tasksApi } from "../api/tasks";
 import { useAdmin } from "../hooks/useAdmin";
 import PostTaskForm from "../components/topics/PostTaskForm";
+import TopicEditor from "../components/topics/TopicEditor";
 import type { TopicDetail, TopicDetailTask } from "../types/topics";
 
 function youtubeEmbed(url: string): string | null {
@@ -15,9 +16,11 @@ export default function TopicDetailPage() {
   const { id } = useParams();
   const topicId = Number(id);
   const { isAdmin, email } = useAdmin();
+  const navigate = useNavigate();
 
   const [detail, setDetail] = useState<TopicDetail | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [editing, setEditing] = useState(false);
 
   const load = useCallback(() => {
     topicsApi
@@ -45,6 +48,9 @@ export default function TopicDetailPage() {
   const translations = tasks.filter((t) => t.task_type === "TRANSLATION");
   const embed = topic.youtube_url ? youtubeEmbed(topic.youtube_url) : null;
 
+  const base = isAdmin ? "/admin/topics" : "/topics";
+  const backTo = topic.parent_id ? `${base}/folder/${topic.parent_id}` : base;
+
   return (
     <div className="pageWrap" style={{ maxWidth: 820 }}>
       <div className="pageHead">
@@ -63,11 +69,32 @@ export default function TopicDetailPage() {
           </p>
         </div>
         <div className="pageActions">
-          <Link to="/topics" className="btn btn--secondary btn--sm">
-            ← Curriculum
+          {isAdmin && (
+            <button
+              className="btn btn--secondary btn--sm"
+              onClick={() => setEditing((v) => !v)}
+            >
+              {editing ? "Close" : "Edit"}
+            </button>
+          )}
+          <Link to={backTo} className="btn btn--secondary btn--sm">
+            ← Back
           </Link>
         </div>
       </div>
+
+      {isAdmin && editing && (
+        <div className="card card--pad-lg" style={{ marginBottom: "1rem" }}>
+          <TopicEditor
+            topic={topic}
+            onUpdated={() => {
+              load();
+              setEditing(false);
+            }}
+            onArchived={() => navigate(backTo)}
+          />
+        </div>
+      )}
 
       {/* ── Video ─────────────────────────────── */}
       <div className="card card--pad-lg stack" style={{ gap: "1rem" }}>
@@ -87,12 +114,14 @@ export default function TopicDetailPage() {
               Watch on YouTube
             </a>
           )
-        ) : (
+        ) : canUploadVideo ? (
           <p className="pageSub">
             {recordingTask
               ? "A recording task is in progress, awaiting upload."
               : "No video yet. An admin can post a recording task below."}
           </p>
+        ) : (
+          <p className="pageSub">No video available yet.</p>
         )}
 
         {canUploadVideo && (
@@ -161,9 +190,14 @@ export default function TopicDetailPage() {
             </div>
           )}
         </div>
-        {translations.length === 0 && (
+        {translations.length === 0 && isAdmin && (
           <p className="pageSub">No translation tasks yet.</p>
         )}
+        {translations.length === 0 &&
+          !isAdmin &&
+          translated_languages.length === 0 && (
+            <p className="pageSub">Not translated yet.</p>
+          )}
         {translations.map((tr) => (
           <TranslationRow
             key={tr.id}

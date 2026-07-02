@@ -131,6 +131,37 @@
     border-radius: var(--radius-pill);
     background: var(--brand-soft);
     color: var(--brand);
+    flex-shrink: 0;
+}
+
+.roleList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+}
+.roleRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+.roleTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+.roleTag {
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 0.1rem 0.45rem;
+    border-radius: var(--radius-pill);
+    background: var(--cream);
+    color: var(--text-secondary);
+}
+.roleEmpty {
+    font-size: 0.72rem;
+    color: var(--text-muted);
 }
 
 .section {

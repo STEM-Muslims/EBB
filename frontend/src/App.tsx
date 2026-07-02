@@ -62,6 +62,10 @@ function App() {
                 <Routes>
                   <Route path="/" element={<DashboardPage />} />
                   <Route path="/topics" element={<TopicManagerPage />} />
+                  <Route
+                    path="/topics/folder/:folderId"
+                    element={<TopicManagerPage />}
+                  />
                   <Route path="/topics/:id" element={<TopicDetailPage />} />
                   <Route
                     path="/tasks"
@@ -86,6 +90,10 @@ function App() {
                 <Routes>
                   <Route path="/" element={<UserHomePage />} />
                   <Route path="/topics" element={<UserTopicsPage />} />
+                  <Route
+                    path="/topics/folder/:folderId"
+                    element={<UserTopicsPage />}
+                  />
                   <Route path="/topics/:id" element={<TopicDetailPage />} />
                   <Route
                     path="/tasks"

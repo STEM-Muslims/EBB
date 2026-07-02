@@ -27,7 +27,15 @@ export default function Layout({
   navItems: NavItem[];
   children: React.ReactNode;
 }) {
-  const { email, isAdmin, roles, avatarUrl, logout } = useAdmin();
+  const {
+    email,
+    isAdmin,
+    roles,
+    teachingSubjectIds,
+    languageIds,
+    avatarUrl,
+    logout,
+  } = useAdmin();
 
   return (
     <div className={styles.shell}>
@@ -66,6 +74,8 @@ export default function Layout({
             <AccountMenu
               email={email}
               roles={roles}
+              teachingSubjectIds={teachingSubjectIds}
+              languageIds={languageIds}
               isAdmin={isAdmin}
               avatarUrl={avatarUrl}
               onLogout={logout}

@@ -170,6 +170,22 @@ def get_queue(
     return [_enrich(session, t, by_id) for t in visible]
 
 
+@router.get("/queue/all")
+def get_full_queue(
+    session: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    """The full to-do queue (every QUEUED task), for visibility only. Claiming
+    still goes through /queue + /claim, which enforce eligibility."""
+    by_id = _topics_by_id(session)
+    queued = session.exec(
+        select(Task)
+        .where(Task.status == TaskStatus.QUEUED)
+        .order_by(col(Task.queue_order))
+    ).all()
+    return [_enrich(session, t, by_id) for t in queued]
+
+
 @router.get("/in-progress")
 def get_in_progress(
     session: Session = Depends(get_db),
