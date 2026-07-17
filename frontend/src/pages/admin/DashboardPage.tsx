@@ -547,6 +547,14 @@ function UsersSection() {
         </div>
       ) : (
         <table className={styles.table}>
+          <colgroup>
+            <col style={{ width: "22%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "24%" }} />
+            <col style={{ width: "24%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "10%" }} />
+          </colgroup>
           <thead>
             <tr>
               <th>Email</th>
@@ -558,10 +566,9 @@ function UsersSection() {
             </tr>
           </thead>
           <tbody>
-            {/* NOTE: We now map over filteredUsers instead of users */}
             {filteredUsers.map((u) => (
               <tr key={u.id}>
-                <td>{u.email}</td>
+                <td className={styles.emailCell}>{u.email}</td>
                 <td>
                   <div className={styles.roleCell}>
                     {u.is_admin && (
@@ -584,7 +591,7 @@ function UsersSection() {
                     )}
                   </div>
                 </td>
-                <td style={{ maxWidth: "250px" }}>
+                <td>
                   {lookupsLoading ? (
                     <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Loading...</span>
                   ) : (
@@ -596,7 +603,7 @@ function UsersSection() {
                     />
                   )}
                 </td>
-                <td style={{ maxWidth: "250px" }}>
+                <td>
                   {lookupsLoading ? (
                     <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Loading...</span>
                   ) : (
@@ -619,7 +626,6 @@ function UsersSection() {
                     >
                       Edit
                     </button>
-
                     <button
                       className={styles.btnGhost}
                       onClick={() => setPasswordUser(u)}
