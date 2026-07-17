@@ -1,0 +1,86 @@
+.filterContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: var(--bg-subtle, rgba(0, 0, 0, 0.02));
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  margin-bottom: 1rem;
+}
+
+.controlsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.filterLabel {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.selectInput {
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border-strong, #ccc);
+  font-size: 0.85rem;
+  background-color: var(--bg, #fff);
+  color: var(--text, #111);
+  cursor: pointer;
+}
+
+.selectInput:focus {
+  outline: none;
+  border-color: var(--primary, #3b82f6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.clearButton {
+  background: none;
+  border: none;
+  color: var(--danger, #ef4444);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: auto;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm, 4px);
+}
+
+.clearButton:hover {
+  background-color: rgba(239, 68, 68, 0.08);
+}
+
+.activeFiltersRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border, #e5e7eb);
+}
+
+.activeLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted, #6b7280);
+  margin-right: 0.25rem;
+}
+
+.filterPill {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.filterPill:hover {
+  opacity: 0.85;
+}
+
+.filterPill:active {
+  transform: scale(0.97);
+}
