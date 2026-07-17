@@ -1,6 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useAdmin } from "../../hooks/useAdmin";
 import { usersApi, type AdminUser, type RoleType } from "../../api/users";
+import { useUserLookups } from "../../hooks/useUserLookups";
+import { UserAttributesList } from "../../components/UserAttributesList";
 import { topicsApi } from "../../api/topics";
 import { languagesApi, type Language } from "../../api/languages";
 import type { Topic } from "../../types/topics";
@@ -454,6 +456,7 @@ function UsersSection() {
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [passwordUser, setPasswordUser] = useState<AdminUser | null>(null);
+  const { subjectsMap, languagesMap, isLoading: lookupsLoading } = useUserLookups();
 
   async function load() {
     setLoading(true);
@@ -499,6 +502,8 @@ function UsersSection() {
             <tr>
               <th>Email</th>
               <th>Role</th>
+              <th>Teaching Subjects</th>
+              <th>Spoken Languages</th>
               <th>Auth</th>
               <th>Actions</th>
             </tr>
@@ -529,6 +534,35 @@ function UsersSection() {
                     )}
                   </div>
                 </td>
+
+                {/* FIXED: Changed user.teaching_subject_ids to u.teaching_subject_ids */}
+                <td style={{ maxWidth: "250px" }}>
+                  {lookupsLoading ? (
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Loading...</span>
+                  ) : (
+                    <UserAttributesList
+                      ids={u.teaching_subject_ids}
+                      type="subject"
+                      lookupMap={subjectsMap}
+                      maxItems={2}
+                    />
+                  )}
+                </td>
+
+                {/* FIXED: Changed user.language_ids to u.language_ids */}
+                <td style={{ maxWidth: "250px" }}>
+                  {lookupsLoading ? (
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Loading...</span>
+                  ) : (
+                    <UserAttributesList
+                      ids={u.language_ids}
+                      type="language"
+                      lookupMap={languagesMap}
+                      maxItems={2}
+                    />
+                  )}
+                </td>
+
                 <td className={styles.muted}>
                   {u.google_id ? "Google" : "Password"}
                 </td>
