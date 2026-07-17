@@ -7,9 +7,12 @@
     color: var(--text-muted);
 }
 
+/* ── Centered Page Layout ────────────────── */
 .page {
     padding: 32px 36px;
     max-width: 760px;
+    width: 100%;
+    margin: 0 auto; /* Horizontally centers the admin dashboard */
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -41,7 +44,7 @@
     gap: 16px;
 }
 
-/* â”€â”€ Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Card ────────────────────────────────── */
 .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -66,7 +69,7 @@
     color: var(--text-muted);
 }
 
-/* â”€â”€ Account row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Account row ─────────────────────────── */
 .accountRow {
     display: flex;
     align-items: center;
@@ -111,7 +114,7 @@
     margin: 0;
 }
 
-/* â”€â”€ Password form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Password form ───────────────────────── */
 .passwordForm {
     display: flex;
     flex-direction: column;
@@ -158,17 +161,80 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-top: 4px;
 }
 
-/* â”€â”€ Create user form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.createForm {
+/* ── Modals ──────────────────────────────── */
+.modalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.modalContent {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 16px;
-    background: var(--bg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    animation: scaleUp 0.15s ease-out;
+    overflow: hidden;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modalTitle {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.btnClose {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
     border-radius: var(--radius-md);
-    border: 1px solid var(--border);
+}
+
+.btnClose:hover {
+    background: var(--bg);
+    color: var(--text-primary);
+}
+
+.modalBody {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* ── Form Inner (used inside modals) ─────── */
+.formInner {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
 .checkboxRow {
@@ -193,12 +259,12 @@
     padding: 10px 12px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    background: var(--surface);
+    background: var(--bg);
     max-height: 160px;
     overflow-y: auto;
 }
 
-/* â”€â”€ Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Table ───────────────────────────────── */
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -217,7 +283,7 @@
 }
 
 .table td {
-    padding: 10px 0;
+    padding: 12px 0;
     border-bottom: 1px solid var(--border);
     color: var(--text-primary);
     vertical-align: middle;
@@ -227,7 +293,12 @@
     border-bottom: none;
 }
 
-/* â”€â”€ Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.actionButtons {
+    display: flex;
+    gap: 6px;
+}
+
+/* ── Badges ──────────────────────────────── */
 .badge {
     font-family: var(--font-mono);
     font-size: 10px;
@@ -259,7 +330,7 @@
     gap: 4px;
 }
 
-/* â”€â”€ Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Buttons ─────────────────────────────── */
 .btnPrimary {
     background: var(--brand);
     color: var(--surface);
@@ -269,6 +340,7 @@
     font-size: 13px;
     font-weight: 500;
     transition: opacity 0.1s;
+    cursor: pointer;
 }
 
 .btnPrimary:disabled {
@@ -284,6 +356,7 @@
     padding: 7px 14px;
     font-size: 13px;
     transition: background 0.1s;
+    cursor: pointer;
 }
 
 .btnGhost:hover {
@@ -299,21 +372,24 @@
     font-size: 13px;
     margin-left: auto;
     transition: border-color 0.15s;
+    cursor: pointer;
 }
 
 .btnDanger:hover {
     border-color: var(--danger);
 }
 
-/* â”€â”€ Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Status ──────────────────────────────── */
 .error {
     font-size: 12px;
     color: var(--danger);
+    margin: 0;
 }
 
 .success {
     font-size: 12px;
     color: var(--success);
+    margin: 0;
 }
 
 .muted {
@@ -321,3 +397,13 @@
     color: var(--text-muted);
 }
 
+/* ── Animations ──────────────────────────── */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}

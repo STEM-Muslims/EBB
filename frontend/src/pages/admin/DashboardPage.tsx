@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAdmin } from "../../hooks/useAdmin";
 import { usersApi, type AdminUser, type RoleType } from "../../api/users";
 import { topicsApi } from "../../api/topics";
@@ -10,6 +10,43 @@ const ROLE_OPTIONS: { value: RoleType; label: string }[] = [
   { value: "TEACHER", label: "Teacher" },
   { value: "TRANSLATOR", label: "Translator" },
 ];
+
+/* ── Reusable Modal Wrapper ──────────────── */
+function Modal({
+  title,
+  children,
+  onClose,
+}: {
+  title: string;
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  // Close on Escape key
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div className={styles.modalBackdrop} onClick={onClose}>
+      <div
+        className={styles.modalContent}
+        onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
+      >
+        <div className={styles.modalHeader}>
+          <h3 className={styles.modalTitle}>{title}</h3>
+          <button className={styles.btnClose} onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        </div>
+        <div className={styles.modalBody}>{children}</div>
+      </div>
+    </div>
+  );
+}
 
 function RoleCheckboxes({
   selected,
@@ -162,9 +199,7 @@ function EditUserForm({
   }
 
   return (
-    <div className={styles.createForm}>
-      <h3>Edit User</h3>
-
+    <div className={styles.formInner}>
       <div className={styles.field}>
         <label className={styles.label}>Email</label>
         <input
@@ -207,9 +242,8 @@ function EditUserForm({
 
       <div className={styles.formActions}>
         <button className={styles.btnPrimary} onClick={save} disabled={loading}>
-          Save
+          Save Changes
         </button>
-
         <button className={styles.btnGhost} onClick={onCancel}>
           Cancel
         </button>
@@ -252,14 +286,12 @@ function ResetPasswordForm({
   }
 
   return (
-    <div className={styles.createForm}>
-      <h3>Reset Password</h3>
-
-      <p>{user.email}</p>
+    <div className={styles.formInner}>
+      <p className={styles.muted}>Resetting password for <strong>{user.email}</strong></p>
 
       <div className={styles.fieldRow}>
         <div className={styles.field}>
-          <label className={styles.label}>Password</label>
+          <label className={styles.label}>New Password</label>
           <input
             className={styles.input}
             type="password"
@@ -285,7 +317,6 @@ function ResetPasswordForm({
         <button className={styles.btnPrimary} onClick={save} disabled={loading}>
           Reset Password
         </button>
-
         <button className={styles.btnGhost} onClick={onCancel}>
           Cancel
         </button>
@@ -346,12 +377,14 @@ function AccountSection({
       <div className={styles.divider} />
 
       {!showPasswordForm ? (
-        <button
-          className={styles.btnGhost}
-          onClick={() => setShowPasswordForm(true)}
-        >
-          Change password
-        </button>
+        <div>
+          <button
+            className={styles.btnGhost}
+            onClick={() => setShowPasswordForm(true)}
+          >
+            Change password
+          </button>
+        </div>
       ) : (
         <div className={styles.passwordForm}>
           <div className={styles.fieldRow}>
@@ -452,22 +485,11 @@ function UsersSection() {
         <h2 className={styles.cardTitle}>Users</h2>
         <button
           className={styles.btnPrimary}
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => setShowForm(true)}
         >
-          {showForm ? "Cancel" : "+ Add user"}
+          + Add user
         </button>
       </div>
-
-      {showForm && (
-        <CreateUserForm
-          subjects={subjects}
-          languages={languages}
-          onCreated={() => {
-            setShowForm(false);
-            load();
-          }}
-        />
-      )}
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>
@@ -511,46 +533,68 @@ function UsersSection() {
                   {u.google_id ? "Google" : "Password"}
                 </td>
                 <td>
-                  <button
-                    className={styles.btnGhost}
-                    onClick={() => setEditingUser(u)}
-                  >
-                    Edit
-                  </button>
+                  <div className={styles.actionButtons}>
+                    <button
+                      className={styles.btnGhost}
+                      onClick={() => setEditingUser(u)}
+                    >
+                      Edit
+                    </button>
 
-                  <button
-                    className={styles.btnGhost}
-                    onClick={() => setPasswordUser(u)}
-                  >
-                    Reset Password
-                  </button>
+                    <button
+                      className={styles.btnGhost}
+                      onClick={() => setPasswordUser(u)}
+                    >
+                      Reset Password
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
-          {editingUser && (
-            <EditUserForm
-              user={editingUser}
-              subjects={subjects}
-              languages={languages}
-              onSaved={() => {
-                setEditingUser(null);
-                load();
-              }}
-              onCancel={() => setEditingUser(null)}
-            />
-          )}
-
-          {passwordUser && (
-            <ResetPasswordForm
-              user={passwordUser}
-              onSaved={() => {
-                setPasswordUser(null);
-              }}
-              onCancel={() => setPasswordUser(null)}
-            />
-          )}
         </table>
+      )}
+
+      {/* ── Modals ── */}
+      {showForm && (
+        <Modal title="Add New User" onClose={() => setShowForm(false)}>
+          <CreateUserForm
+            subjects={subjects}
+            languages={languages}
+            onCreated={() => {
+              setShowForm(false);
+              load();
+            }}
+            onCancel={() => setShowForm(false)}
+          />
+        </Modal>
+      )}
+
+      {editingUser && (
+        <Modal title="Edit User" onClose={() => setEditingUser(null)}>
+          <EditUserForm
+            user={editingUser}
+            subjects={subjects}
+            languages={languages}
+            onSaved={() => {
+              setEditingUser(null);
+              load();
+            }}
+            onCancel={() => setEditingUser(null)}
+          />
+        </Modal>
+      )}
+
+      {passwordUser && (
+        <Modal title="Reset Password" onClose={() => setPasswordUser(null)}>
+          <ResetPasswordForm
+            user={passwordUser}
+            onSaved={() => {
+              setPasswordUser(null);
+            }}
+            onCancel={() => setPasswordUser(null)}
+          />
+        </Modal>
       )}
     </section>
   );
@@ -561,10 +605,12 @@ function CreateUserForm({
   subjects,
   languages,
   onCreated,
+  onCancel,
 }: {
   subjects: Topic[];
   languages: Language[];
   onCreated: () => void;
+  onCancel: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -600,7 +646,7 @@ function CreateUserForm({
   }
 
   return (
-    <div className={styles.createForm}>
+    <div className={styles.formInner}>
       <div className={styles.fieldRow}>
         <div className={styles.field}>
           <label className={styles.label}>Email</label>
@@ -622,7 +668,7 @@ function CreateUserForm({
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Leave blank for Google-only"
+            placeholder="Leave blank for Google"
           />
         </div>
       </div>
@@ -665,6 +711,9 @@ function CreateUserForm({
           disabled={loading}
         >
           {loading ? "Creating…" : "Create user"}
+        </button>
+        <button className={styles.btnGhost} onClick={onCancel}>
+          Cancel
         </button>
       </div>
     </div>
