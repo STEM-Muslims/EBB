@@ -31,7 +31,7 @@ export function useUserLookups(): UserLookups {
         if (!isMounted) return;
         const sMap = new Map<number, string>();
         subjects.forEach((s: Topic) => {
-          sMap.set(s.id, s.title || s.name || `Subject #${s.id}`);
+          sMap.set(s.id, s.name || `Subject #${s.id}`);
         });
 
         const lMap = new Map<number, { name: string; code: string | null }>();
