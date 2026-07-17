@@ -410,6 +410,25 @@
     color: var(--text-muted);
 }
 
+/* ── Search Filter ──────────────────────────── */
+
+.searchInput {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+    max-width: 320px;
+}
+
+.searchInput:focus {
+    border-color: var(--brand);
+}
+
 /* ── Animations ──────────────────────────── */
 @keyframes fadeIn {
     from { opacity: 0; }

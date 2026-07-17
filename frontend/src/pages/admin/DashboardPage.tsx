@@ -459,6 +459,7 @@ function UsersSection() {
   const [passwordUser, setPasswordUser] = useState<AdminUser | null>(null);
   const [selectedSubjects, setSelectedSubjects] = useState<number[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { subjectsMap, languagesMap, isLoading: lookupsLoading } = useUserLookups();
 
@@ -495,8 +496,12 @@ function UsersSection() {
     const matchesLanguages =
       selectedLanguages.length === 0 ||
       selectedLanguages.every((id) => (u.language_ids || []).includes(id));
+    // Substring, case-insensitive. When a `name` field is added later,
+    // TODO extend this to also check u.name.toLowerCase().includes(query). when name field is added
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = query === "" || u.email.toLowerCase().includes(query);
 
-    return matchesSubjects && matchesLanguages;
+    return matchesSubjects && matchesLanguages && matchesSearch;
   });
 
   return (
@@ -511,7 +516,17 @@ function UsersSection() {
         </button>
       </div>
 
-      {/* NEW: Filter Bar */}
+      {!loading && (
+        <input
+          type="text"
+          className={styles.searchInput}
+          placeholder="Search by email…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          aria-label="Search users by email"
+        />
+      )}
+
       {!loading && (
         <UserFilters
           subjects={subjects}
@@ -531,13 +546,14 @@ function UsersSection() {
         <p className={styles.muted}>Loading…</p>
       ) : filteredUsers.length === 0 ? (
         <div style={{ textAlign: "center", padding: "2rem 0", color: "var(--text-muted)" }}>
-          <p>No users match the selected filters.</p>
-          {(selectedSubjects.length > 0 || selectedLanguages.length > 0) && (
+          <p>No users match your search or filters.</p>
+          {(selectedSubjects.length > 0 || selectedLanguages.length > 0 || searchQuery.trim() !== "") && (
             <button
               className={styles.btnGhost}
               onClick={() => {
                 setSelectedSubjects([]);
                 setSelectedLanguages([]);
+                setSearchQuery("");
               }}
               style={{ marginTop: "0.5rem" }}
             >
