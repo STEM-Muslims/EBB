@@ -3,6 +3,7 @@ import { useAdmin } from "../../hooks/useAdmin";
 import { usersApi, type AdminUser, type RoleType } from "../../api/users";
 import { useUserLookups } from "../../hooks/useUserLookups";
 import { UserAttributesList } from "../../components/UserAttributesList";
+import { UserFilters } from "../../components/UserFilters";
 import { topicsApi } from "../../api/topics";
 import { languagesApi, type Language } from "../../api/languages";
 import type { Topic } from "../../types/topics";
@@ -456,6 +457,9 @@ function UsersSection() {
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [passwordUser, setPasswordUser] = useState<AdminUser | null>(null);
+  const [selectedSubjects, setSelectedSubjects] = useState<number[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
+
   const { subjectsMap, languagesMap, isLoading: lookupsLoading } = useUserLookups();
 
   async function load() {
@@ -482,6 +486,19 @@ function UsersSection() {
       .catch(() => console.error("Failed to load languages"));
   }, []);
 
+  // Returns true if the user matches ALL selected subjects (if any) and ALL selected languages (if any)
+  const filteredUsers = users.filter((u) => {
+    const matchesSubjects =
+      selectedSubjects.length === 0 ||
+      selectedSubjects.every((id) => (u.teaching_subject_ids || []).includes(id));
+
+    const matchesLanguages =
+      selectedLanguages.length === 0 ||
+      selectedLanguages.every((id) => (u.language_ids || []).includes(id));
+
+    return matchesSubjects && matchesLanguages;
+  });
+
   return (
     <section className={styles.card}>
       <div className={styles.cardHeader}>
@@ -494,8 +511,40 @@ function UsersSection() {
         </button>
       </div>
 
+      {/* NEW: Filter Bar */}
+      {!loading && (
+        <UserFilters
+          subjects={subjects}
+          languages={languages}
+          selectedSubjects={selectedSubjects}
+          selectedLanguages={selectedLanguages}
+          onSubjectsChange={setSelectedSubjects}
+          onLanguagesChange={setSelectedLanguages}
+          onClear={() => {
+            setSelectedSubjects([]);
+            setSelectedLanguages([]);
+          }}
+        />
+      )}
+
       {loading ? (
         <p className={styles.muted}>Loading…</p>
+      ) : filteredUsers.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "2rem 0", color: "var(--text-muted)" }}>
+          <p>No users match the selected filters.</p>
+          {(selectedSubjects.length > 0 || selectedLanguages.length > 0) && (
+            <button
+              className={styles.btnGhost}
+              onClick={() => {
+                setSelectedSubjects([]);
+                setSelectedLanguages([]);
+              }}
+              style={{ marginTop: "0.5rem" }}
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
       ) : (
         <table className={styles.table}>
           <thead>
@@ -509,7 +558,8 @@ function UsersSection() {
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
+            {/* NOTE: We now map over filteredUsers instead of users */}
+            {filteredUsers.map((u) => (
               <tr key={u.id}>
                 <td>{u.email}</td>
                 <td>
@@ -534,8 +584,6 @@ function UsersSection() {
                     )}
                   </div>
                 </td>
-
-                {/* FIXED: Changed user.teaching_subject_ids to u.teaching_subject_ids */}
                 <td style={{ maxWidth: "250px" }}>
                   {lookupsLoading ? (
                     <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Loading...</span>
@@ -548,8 +596,6 @@ function UsersSection() {
                     />
                   )}
                 </td>
-
-                {/* FIXED: Changed user.language_ids to u.language_ids */}
                 <td style={{ maxWidth: "250px" }}>
                   {lookupsLoading ? (
                     <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Loading...</span>
@@ -562,7 +608,6 @@ function UsersSection() {
                     />
                   )}
                 </td>
-
                 <td className={styles.muted}>
                   {u.google_id ? "Google" : "Password"}
                 </td>

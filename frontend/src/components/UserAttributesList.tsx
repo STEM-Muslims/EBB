@@ -31,7 +31,7 @@ export const UserAttributesList: React.FC<UserAttributesListProps> = ({
     <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center" }}>
       {visibleIds.map((id) => {
         const item = lookupMap.get(id);
-        
+
         // Resolve label and optional language code
         let label = `ID #${id}`;
         let badgeCode = null;
@@ -41,7 +41,7 @@ export const UserAttributesList: React.FC<UserAttributesListProps> = ({
             label = item.name;
             badgeCode = item.code ? item.code.toUpperCase() : null;
           } else {
-            label = typeof item === "string" ? item : item.name || item.title;
+            label = typeof item === "string" ? item : item.name;
           }
         }
 
