@@ -73,6 +73,9 @@ export const tasksApi = {
   requeue: (id: number) =>
     request<TaskView>(`/tasks/${id}/requeue`, { method: "POST" }),
 
+  delete: (id: number) =>
+      request<{ ok: boolean }>(`/tasks/${id}`, { method: "DELETE" }),
+
   reorderQueue: (task_ids: number[]) =>
     request<{ ok: boolean }>("/tasks/queue/reorder", {
       method: "PATCH",

@@ -11,7 +11,7 @@ class TaskStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"  # claimed by a user, being worked on
     RELEASED = "RELEASED"        # given back by the user, awaiting admin requeue
     COMPLETED = "COMPLETED"      # deliverable uploaded
-
+    CANCELLED = "CANCELLED"      # Adds soft-removal without losing record history
 
 class Task(SQLModel, table=True):
     """A unit of work posted against a topic: either RECORDING (a teacher records

@@ -395,3 +395,48 @@ async def upload_caption(
             pass
 
     return _enrich(session, task, _topics_by_id(session))
+
+@router.delete("/{task_id}")
+def delete_task(
+    task_id: int,
+    session: Session = Depends(get_db),
+    _: str = Depends(require_admin),
+):
+    """Remove a task from the active queue by marking it CANCELLED."""
+    task = _get_task_or_404(session, task_id)
+    if task.status in (TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED):
+        raise HTTPException(400, "Cannot remove an in-progress or completed task from the queue")
+
+    now = datetime.now(timezone.utc)
+    task.status = TaskStatus.CANCELLED
+    task.assignee_email = None
+    task.claimed_at = None
+    task.released_at = None
+    task.updated_at = now
+    session.add(task)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{task_id}/requeue")
+def requeue_task(
+    task_id: int,
+    session: Session = Depends(get_db),
+    _: str = Depends(require_admin),
+):
+    task = _get_task_or_404(session, task_id)
+    # Updated to allow requeuing CANCELLED tasks back into QUEUED
+    if task.status not in (TaskStatus.RELEASED, TaskStatus.CANCELLED):
+        raise HTTPException(400, "Only a released or cancelled task can be requeued")
+
+    now = datetime.now(timezone.utc)
+    task.status = TaskStatus.QUEUED
+    task.assignee_email = None
+    task.claimed_at = None
+    task.released_at = None
+    task.queue_order = _next_queue_order(session)
+    task.updated_at = now
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return _enrich(session, task, _topics_by_id(session))

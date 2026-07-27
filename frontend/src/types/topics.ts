@@ -6,7 +6,7 @@ export type VideoState = "UNASSIGNED" | "ASSIGNED" | "COMPLETED";
 
 export type TaskType = "RECORDING" | "TRANSLATION";
 
-export type TaskStatus = "QUEUED" | "IN_PROGRESS" | "RELEASED" | "COMPLETED";
+export type TaskStatus = "QUEUED" | "IN_PROGRESS" | "RELEASED" | "COMPLETED" | "CANCELLED";
 
 export interface Topic {
   id: number;

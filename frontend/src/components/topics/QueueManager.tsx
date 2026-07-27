@@ -37,8 +37,6 @@ export default function QueueManager({
   onChanged: () => void;
 }) {
   const [items, setItems] = useState<TaskView[]>(queue);
-  // Re-sync local order when a fresh queue arrives from the server (adjusting
-  // state during render is preferred over an effect for prop-derived state).
   const [prevQueue, setPrevQueue] = useState<TaskView[]>(queue);
   if (queue !== prevQueue) {
     setPrevQueue(queue);
@@ -62,6 +60,21 @@ export default function QueueManager({
     }
   }
 
+  async function handleDelete(task: TaskView) {
+    if (!window.confirm(`Remove "${label(task).title}" from the queue?`)) {
+      return;
+    }
+    // Optimistic removal from UI
+    setItems((prev) => prev.filter((t) => t.id !== task.id));
+    try {
+      await tasksApi.delete(task.id);
+      onChanged();
+    } catch {
+      alert("Failed to remove task from the queue.");
+      onChanged(); // Revert on failure
+    }
+  }
+
   return (
     <div className="stack" style={{ gap: "1rem" }}>
       <div>
@@ -80,7 +93,12 @@ export default function QueueManager({
             >
               <div className="stack" style={{ gap: "0.4rem" }}>
                 {items.map((t, i) => (
-                  <SortableRow key={t.id} task={t} position={i + 1} />
+                  <SortableRow
+                    key={t.id}
+                    task={t}
+                    position={i + 1}
+                    onDelete={handleDelete}
+                  />
                 ))}
               </div>
             </SortableContext>
@@ -116,15 +134,25 @@ export default function QueueManager({
                       {t.assignee_email && ` · released by ${t.assignee_email}`}
                     </div>
                   </div>
-                  <button
-                    className="btn btn--secondary btn--sm"
-                    onClick={async () => {
-                      await tasksApi.requeue(t.id);
-                      onChanged();
-                    }}
-                  >
-                    Requeue
-                  </button>
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    <button
+                      className="btn btn--secondary btn--sm"
+                      onClick={async () => {
+                        await tasksApi.requeue(t.id);
+                        onChanged();
+                      }}
+                    >
+                      Requeue
+                    </button>
+                    <button
+                      className="btn btn--ghost btn--sm"
+                      style={{ color: "var(--danger, #ef4444)" }}
+                      onClick={() => handleDelete(t)}
+                      title="Remove from queue"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -135,7 +163,15 @@ export default function QueueManager({
   );
 }
 
-function SortableRow({ task, position }: { task: TaskView; position: number }) {
+function SortableRow({
+  task,
+  position,
+  onDelete,
+}: {
+  task: TaskView;
+  position: number;
+  onDelete: (task: TaskView) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: task.id });
   const l = label(task);
@@ -172,6 +208,14 @@ function SortableRow({ task, position }: { task: TaskView; position: number }) {
         <span className="pill pill--stone">{l.kind}</span>
         <div className="pageSub">{l.crumb}</div>
       </div>
+      <button
+        className="btn btn--ghost btn--sm"
+        style={{ color: "var(--danger, #ef4444)" }}
+        onClick={() => onDelete(task)}
+        title="Remove from queue"
+      >
+        Remove
+      </button>
     </div>
   );
 }
