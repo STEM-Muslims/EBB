@@ -133,6 +133,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className={styles.loading}>
+        <div className="spinner"></div>
         <span>Loading…</span>
       </div>
     );
@@ -543,7 +544,10 @@ function UsersSection() {
       )}
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <div className="loadingState">
+          <div className="spinner spinner--sm"></div>
+          <span>Loading…</span>
+        </div>
       ) : filteredUsers.length === 0 ? (
         <div style={{ textAlign: "center", padding: "2rem 0", color: "var(--text-muted)" }}>
           <p>No users match your search or filters.</p>

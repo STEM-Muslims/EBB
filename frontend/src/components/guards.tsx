@@ -10,8 +10,10 @@ function Loading() {
         alignItems: "center",
         justifyContent: "center",
         color: "var(--text-muted)",
+        gap: "0.75rem",
       }}
     >
+      <div className="spinner"></div>
       Loading…
     </div>
   );

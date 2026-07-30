@@ -39,7 +39,12 @@ export default function QueueManagePage() {
         </div>
       </div>
 
-      {status === "loading" && <p className="emptyState">Loading…</p>}
+      {status === "loading" && (
+        <div className="loadingState">
+          <div className="spinner"></div>
+          <span>Loading…</span>
+        </div>
+      )}
       {status === "error" && <p className="emptyState">Couldn’t load the queue.</p>}
       {status === "ready" && (
         <div className="card card--pad-lg">

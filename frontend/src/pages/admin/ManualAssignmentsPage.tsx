@@ -286,7 +286,10 @@ export default function ManualAssignmentsPage() {
       {errorMsg && <div className={styles.errorBanner}>{errorMsg}</div>}
 
       {loadingTasks || lookupsLoading ? (
-        <p className={styles.emptyState}>Loading tasks and curriculum database...</p>
+        <div className="loadingState">
+          <div className="spinner"></div>
+          <span>Loading tasks and curriculum database...</span>
+        </div>
       ) : filteredTasks.length === 0 ? (
         <div className="card">
           <p className={styles.emptyState}>No tasks found matching your filters.</p>

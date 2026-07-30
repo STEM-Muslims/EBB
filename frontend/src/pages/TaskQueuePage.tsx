@@ -115,7 +115,12 @@ export default function TaskQueuePage() {
         </div>
       </div>
 
-      {status === "loading" && <p className="emptyState">Loading…</p>}
+      {status === "loading" && (
+        <div className="loadingState">
+          <div className="spinner"></div>
+          <span>Loading…</span>
+        </div>
+      )}
       {status === "error" && <p className="emptyState">Couldn’t load tasks.</p>}
 
       {status === "ready" && hasActive && !current && (

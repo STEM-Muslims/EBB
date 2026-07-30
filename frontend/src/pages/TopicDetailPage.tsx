@@ -36,7 +36,13 @@ export default function TopicDetailPage() {
     load();
   }, [load]);
 
-  if (status === "loading") return <p className="emptyState">Loading…</p>;
+  if (status === "loading")
+    return (
+      <div className="loadingState">
+        <div className="spinner"></div>
+        <span>Loading…</span>
+      </div>
+    );
   if (status === "error" || !detail)
     return <p className="emptyState">Couldn’t load this topic.</p>;
 

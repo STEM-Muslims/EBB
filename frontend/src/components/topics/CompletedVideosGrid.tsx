@@ -76,10 +76,9 @@ export default function CompletedVideosGrid({
       </div>
 
       {status === "loading" && (
-        <div className={styles.videoList}>
-          {[0, 1, 2].map((i) => (
-            <div key={i} className={`card ${styles.skeletonCard}`} />
-          ))}
+        <div className="loadingState">
+          <div className="spinner"></div>
+          <span>Loading videos…</span>
         </div>
       )}
       {status === "error" && (

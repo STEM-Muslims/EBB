@@ -104,7 +104,12 @@ export default function TopicBrowser({
   }, [current, base, navigate]);
 
   if (status === "loading")
-    return <p className="emptyState">Loading curriculum…</p>;
+    return (
+      <div className="loadingState">
+        <div className="spinner"></div>
+        <span>Loading curriculum…</span>
+      </div>
+    );
   if (status === "error")
     return <p className="emptyState">Couldn’t load the curriculum.</p>;
 
