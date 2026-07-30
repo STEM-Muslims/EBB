@@ -82,6 +82,22 @@ export const tasksApi = {
       body: JSON.stringify({ task_ids }),
     }),
 
+  getAdminAll: () => request<TaskView[]>("/tasks/admin/all"),
+
+  getEligibleUsers: (id: number) =>
+    request<{ id: number; email: string; avatar_url: string | null }[]>(
+      `/tasks/${id}/eligible-users`,
+    ),
+
+  adminUpdate: (
+    id: number,
+    data: { status: string; assignee_email?: string | null },
+  ) =>
+    request<TaskView>(`/tasks/${id}/admin`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
   uploadCaption: (taskId: number, file: File) => {
     const body = new FormData();
     body.append("file", file);

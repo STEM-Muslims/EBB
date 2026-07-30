@@ -35,6 +35,11 @@ class TaskCreate(SQLModel):
     language_id: Optional[int] = None
 
 
+class TaskAdminUpdate(SQLModel):
+    status: TaskStatus
+    assignee_email: Optional[str] = None
+
+
 class QueueReorder(SQLModel):
     task_ids: list[int]
 
@@ -439,4 +444,106 @@ def requeue_task(
     session.add(task)
     session.commit()
     session.refresh(task)
-    return _enrich(session, task, _topics_by_id(session))
+    _enriched_result = _enrich(session, task, _topics_by_id(session))
+
+
+@router.get("/admin/all")
+def get_all_tasks_for_admin(
+    session: Session = Depends(get_db),
+    _: str = Depends(require_admin),
+):
+    """Fetch all tasks in the system for admin manual control."""
+    by_id = _topics_by_id(session)
+    tasks = session.exec(select(Task).order_by(col(Task.created_at).desc())).all()
+    return [_enrich(session, t, by_id) for t in tasks]
+
+
+@router.get("/{task_id}/eligible-users")
+def get_eligible_users_for_task(
+    task_id: int,
+    session: Session = Depends(get_db),
+    _: str = Depends(require_admin),
+):
+    """Fetch all users who are eligible for a specific task."""
+    task = _get_task_or_404(session, task_id)
+    by_id = _topics_by_id(session)
+
+    users = session.exec(select(User)).all()
+    eligible_list = []
+    for user in users:
+        # Check if they have the right eligibility (reusing _eligible)
+        if _eligible(session, user, task, by_id):
+            eligible_list.append({
+                "id": user.id,
+                "email": user.email,
+                "avatar_url": user.avatar_url
+            })
+    return eligible_list
+
+
+@router.patch("/{task_id}/admin")
+def admin_update_task(
+    task_id: int,
+    payload: TaskAdminUpdate,
+    session: Session = Depends(get_db),
+    _: str = Depends(require_admin),
+):
+    """Manually modify a task's status and assignee_email."""
+    task = _get_task_or_404(session, task_id)
+    by_id = _topics_by_id(session)
+    now = datetime.now(timezone.utc)
+
+    # If setting to IN_PROGRESS, assignee_email must be provided and valid
+    if payload.status == TaskStatus.IN_PROGRESS:
+        if not payload.assignee_email:
+            raise HTTPException(400, "In-progress tasks must have an assignee email")
+        user = session.exec(select(User).where(User.email == payload.assignee_email)).first()
+        if not user:
+            raise HTTPException(404, "Assignee user not found")
+        if not _eligible(session, user, task, by_id):
+            raise HTTPException(400, f"User {payload.assignee_email} is not eligible for this task")
+
+        task.assignee_email = payload.assignee_email
+        if task.status != TaskStatus.IN_PROGRESS:
+            task.claimed_at = now
+            task.released_at = None
+            task.completed_at = None
+
+    elif payload.status == TaskStatus.QUEUED:
+        # Clear assignee and claim/release/complete timestamps
+        task.assignee_email = None
+        task.claimed_at = None
+        task.released_at = None
+        task.completed_at = None
+        if task.status != TaskStatus.QUEUED:
+            task.queue_order = _next_queue_order(session)
+
+    elif payload.status == TaskStatus.RELEASED:
+        if task.status != TaskStatus.RELEASED:
+            task.released_at = now
+            task.completed_at = None
+
+    elif payload.status == TaskStatus.COMPLETED:
+        if not payload.assignee_email:
+            raise HTTPException(400, "Completed tasks must have an assignee email")
+        user = session.exec(select(User).where(User.email == payload.assignee_email)).first()
+        if not user:
+            raise HTTPException(404, "Assignee user not found")
+        task.assignee_email = payload.assignee_email
+        if task.status != TaskStatus.COMPLETED:
+            task.completed_at = now
+            task.released_at = None
+
+    elif payload.status == TaskStatus.CANCELLED:
+        task.assignee_email = None
+        task.claimed_at = None
+        task.released_at = None
+        task.completed_at = None
+
+    task.status = payload.status
+    task.updated_at = now
+
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return _enrich(session, task, by_id)

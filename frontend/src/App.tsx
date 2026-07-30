@@ -10,6 +10,7 @@ import TaskQueuePage from "./pages/TaskQueuePage";
 import InProgressPage from "./pages/InProgressPage";
 import QueueManagePage from "./pages/QueueManagePage";
 import VideoManagerPage from "./pages/VideoManagerPage";
+import ManualAssignmentsPage from "./pages/admin/ManualAssignmentsPage";
 import UserHomePage from "./pages/user/HomePage";
 import UserVideosPage from "./pages/user/VideosPage";
 import UserTopicsPage from "./pages/user/TopicsPage";
@@ -25,6 +26,7 @@ const ADMIN_NAV: NavItem[] = [
       { to: "/admin/tasks/queue", label: "Task queue" },
       { to: "/admin/tasks/in-progress", label: "In-progress" },
       { to: "/admin/tasks/manage", label: "Queue management" },
+      { to: "/admin/tasks/assignments", label: "Manual assignments" },
     ],
   },
   { to: "/admin/videos", label: "Videos Uploaded", icon: "▦" },
@@ -74,6 +76,7 @@ function App() {
                   <Route path="/tasks/queue" element={<TaskQueuePage />} />
                   <Route path="/tasks/in-progress" element={<InProgressPage />} />
                   <Route path="/tasks/manage" element={<QueueManagePage />} />
+                  <Route path="/tasks/assignments" element={<ManualAssignmentsPage />} />
                   <Route path="/videos" element={<VideoManagerPage />} />
                 </Routes>
               </Layout>
