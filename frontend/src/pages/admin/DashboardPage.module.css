@@ -97,6 +97,12 @@
     gap: 1px;
 }
 
+.accountName {
+    font-size: 14px;
+    color: var(--text-h);
+    font-weight: 600;
+}
+
 .accountEmail {
     font-size: 13.5px;
     color: var(--text-primary);
@@ -287,12 +293,16 @@
     padding: 14px 12px 14px 0;
     border-bottom: 1px solid var(--border);
     color: var(--text-primary);
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 .table th:last-child,
 .table td:last-child {
     padding-right: 0;
+}
+
+.table th.thActions {
+    text-align: right;
 }
 
 .table tr:last-child td {
@@ -307,12 +317,55 @@
     background: var(--bg);
 }
 
-.emailCell {
+.userCell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.userName {
+    color: var(--text-h);
+    font-weight: 500;
     word-break: break-word;
+}
+
+.userEmail {
+    font-size: 12px;
+    color: var(--text-muted);
+    word-break: break-word;
+}
+
+.actionButtons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+/* ── Empty state ─────────────────────────── */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 32px 20px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.emptyState p {
+    margin: 0;
 }
 
 /* ── Badges ──────────────────────────────── */
 .badge {
+    display: inline-flex;
+    align-items: center;
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 500;
@@ -376,6 +429,11 @@
     background: var(--bg);
 }
 
+.btnGhostSm {
+    padding: 4px 9px;
+    font-size: 12px;
+}
+
 .btnDanger {
     background: none;
     color: var(--danger);
@@ -408,6 +466,7 @@
 .muted {
     font-size: 13px;
     color: var(--text-muted);
+    margin: 0;
 }
 
 /* ── Search Filter ──────────────────────────── */

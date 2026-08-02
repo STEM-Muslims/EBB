@@ -6,6 +6,7 @@ import { UserAttributesList } from "../../components/UserAttributesList";
 import { UserFilters } from "../../components/UserFilters";
 import { topicsApi } from "../../api/topics";
 import { languagesApi, type Language } from "../../api/languages";
+import { displayName, fullName, initials } from "../../lib/userName";
 import type { Topic } from "../../types/topics";
 import styles from "./DashboardPage.module.css";
 
@@ -128,7 +129,7 @@ function MultiSelect({
 }
 
 export default function DashboardPage() {
-  const { email, loading, logout } = useAdmin();
+  const { email, firstName, lastName, loading, logout } = useAdmin();
 
   if (loading) {
     return (
@@ -149,7 +150,12 @@ export default function DashboardPage() {
       </div>
 
       <div className={styles.sections}>
-        <AccountSection email={email!} onLogout={logout} />
+        <AccountSection
+          email={email!}
+          firstName={firstName}
+          lastName={lastName}
+          onLogout={logout}
+        />
         <UsersSection />
       </div>
     </div>
@@ -170,6 +176,8 @@ function EditUserForm({
   onCancel: () => void;
 }) {
   const [email, setEmail] = useState(user.email);
+  const [firstName, setFirstName] = useState(user.first_name ?? "");
+  const [lastName, setLastName] = useState(user.last_name ?? "");
   const [isAdmin, setIsAdmin] = useState(user.is_admin);
   const [roles, setRoles] = useState<RoleType[]>(user.roles ?? []);
   const [teachingSubjectIds, setTeachingSubjectIds] = useState<number[]>(
@@ -188,6 +196,8 @@ function EditUserForm({
     try {
       await usersApi.update(user.id, {
         email,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
         is_admin: isAdmin,
         roles,
         teaching_subject_ids: roles.includes("TEACHER") ? teachingSubjectIds : [],
@@ -204,6 +214,25 @@ function EditUserForm({
 
   return (
     <div className={styles.formInner}>
+      <div className={styles.fieldRow}>
+        <div className={styles.field}>
+          <label className={styles.label}>First name</label>
+          <input
+            className={styles.input}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label}>Last name</label>
+          <input
+            className={styles.input}
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className={styles.field}>
         <label className={styles.label}>Email</label>
         <input
@@ -219,14 +248,14 @@ function EditUserForm({
           checked={isAdmin}
           onChange={(e) => setIsAdmin(e.target.checked)}
         />
-        <span>Admin</span>
+        <span>Admin access</span>
       </label>
 
       <RoleCheckboxes selected={roles} onChange={setRoles} />
 
       {roles.includes("TEACHER") && (
         <MultiSelect
-          label="Subjects they can teach"
+          label="Teaching subjects"
           options={subjects}
           selected={teachingSubjectIds}
           onChange={setTeachingSubjectIds}
@@ -235,7 +264,7 @@ function EditUserForm({
 
       {roles.includes("TRANSLATOR") && (
         <MultiSelect
-          label="Languages they can translate into"
+          label="Translation languages"
           options={languages}
           selected={languageIds}
           onChange={setLanguageIds}
@@ -246,7 +275,7 @@ function EditUserForm({
 
       <div className={styles.formActions}>
         <button className={styles.btnPrimary} onClick={save} disabled={loading}>
-          Save Changes
+          {loading ? "Saving…" : "Save changes"}
         </button>
         <button className={styles.btnGhost} onClick={onCancel}>
           Cancel
@@ -272,7 +301,7 @@ function ResetPasswordForm({
 
   async function save() {
     if (password !== confirm) {
-      setError("Passwords do not match");
+      setError("Passwords do not match.");
       return;
     }
 
@@ -291,11 +320,11 @@ function ResetPasswordForm({
 
   return (
     <div className={styles.formInner}>
-      <p className={styles.muted}>Resetting password for <strong>{user.email}</strong></p>
+      <p className={styles.muted}>Set a new password for <strong>{user.email}</strong>.</p>
 
       <div className={styles.fieldRow}>
         <div className={styles.field}>
-          <label className={styles.label}>New Password</label>
+          <label className={styles.label}>New password</label>
           <input
             className={styles.input}
             type="password"
@@ -319,7 +348,7 @@ function ResetPasswordForm({
 
       <div className={styles.formActions}>
         <button className={styles.btnPrimary} onClick={save} disabled={loading}>
-          Reset Password
+          {loading ? "Saving…" : "Reset password"}
         </button>
         <button className={styles.btnGhost} onClick={onCancel}>
           Cancel
@@ -332,9 +361,13 @@ function ResetPasswordForm({
 /* ── Account section ─────────────────────── */
 function AccountSection({
   email,
+  firstName,
+  lastName,
   onLogout,
 }: {
   email: string;
+  firstName: string | null;
+  lastName: string | null;
   onLogout: () => void;
 }) {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -342,6 +375,9 @@ function AccountSection({
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<"idle" | "ok" | "error">("idle");
+
+  const identity = { email, first_name: firstName, last_name: lastName };
+  const name = fullName(identity);
 
   async function changePassword() {
     if (!password || password !== confirm) {
@@ -368,8 +404,9 @@ function AccountSection({
       <h2 className={styles.cardTitle}>Account</h2>
 
       <div className={styles.accountRow}>
-        <div className={styles.avatar}>{email.charAt(0).toUpperCase()}</div>
+        <div className={styles.avatar}>{initials(identity)}</div>
         <div className={styles.accountInfo}>
+          {name && <span className={styles.accountName}>{name}</span>}
           <span className={styles.accountEmail}>{email}</span>
           <span className={styles.accountRole}>Administrator</span>
         </div>
@@ -497,10 +534,12 @@ function UsersSection() {
     const matchesLanguages =
       selectedLanguages.length === 0 ||
       selectedLanguages.every((id) => (u.language_ids || []).includes(id));
-    // Substring, case-insensitive. When a `name` field is added later,
-    // TODO extend this to also check u.name.toLowerCase().includes(query). when name field is added
+    // Substring, case-insensitive, across the user's name and email.
     const query = searchQuery.trim().toLowerCase();
-    const matchesSearch = query === "" || u.email.toLowerCase().includes(query);
+    const matchesSearch =
+      query === "" ||
+      u.email.toLowerCase().includes(query) ||
+      (fullName(u)?.toLowerCase().includes(query) ?? false);
 
     return matchesSubjects && matchesLanguages && matchesSearch;
   });
@@ -521,10 +560,10 @@ function UsersSection() {
         <input
           type="text"
           className={styles.searchInput}
-          placeholder="Search by email…"
+          placeholder="Search by name or email…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          aria-label="Search users by email"
+          aria-label="Search users by name or email"
         />
       )}
 
@@ -549,7 +588,7 @@ function UsersSection() {
           <span>Loading…</span>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "2rem 0", color: "var(--text-muted)" }}>
+        <div className={styles.emptyState}>
           <p>No users match your search or filters.</p>
           {(selectedSubjects.length > 0 || selectedLanguages.length > 0 || searchQuery.trim() !== "") && (
             <button
@@ -559,36 +598,42 @@ function UsersSection() {
                 setSelectedLanguages([]);
                 setSearchQuery("");
               }}
-              style={{ marginTop: "0.5rem" }}
             >
-              Reset Filters
+              Clear search and filters
             </button>
           )}
         </div>
       ) : (
         <table className={styles.table}>
           <colgroup>
-            <col style={{ width: "22%" }} />
-            <col style={{ width: "12%" }} />
-            <col style={{ width: "24%" }} />
-            <col style={{ width: "24%" }} />
-            <col style={{ width: "8%" }} />
-            <col style={{ width: "10%" }} />
+            <col style={{ width: "27%" }} />
+            <col style={{ width: "11%" }} />
+            <col style={{ width: "17%" }} />
+            <col style={{ width: "17%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "19%" }} />
           </colgroup>
           <thead>
             <tr>
-              <th>Email</th>
+              <th>User</th>
               <th>Role</th>
-              <th>Teaching Subjects</th>
-              <th>Spoken Languages</th>
+              <th>Teaching subjects</th>
+              <th>Languages</th>
               <th>Auth</th>
-              <th>Actions</th>
+              <th className={styles.thActions}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredUsers.map((u) => (
               <tr key={u.id}>
-                <td className={styles.emailCell}>{u.email}</td>
+                <td>
+                  <div className={styles.userCell}>
+                    <span className={styles.userName}>{displayName(u)}</span>
+                    {fullName(u) && (
+                      <span className={styles.userEmail}>{u.email}</span>
+                    )}
+                  </div>
+                </td>
                 <td>
                   <div className={styles.roleCell}>
                     {u.is_admin && (
@@ -613,7 +658,7 @@ function UsersSection() {
                 </td>
                 <td>
                   {lookupsLoading ? (
-                    <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Loading...</span>
+                    <span className={styles.muted}>Loading…</span>
                   ) : (
                     <UserAttributesList
                       ids={u.teaching_subject_ids}
@@ -625,7 +670,7 @@ function UsersSection() {
                 </td>
                 <td>
                   {lookupsLoading ? (
-                    <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Loading...</span>
+                    <span className={styles.muted}>Loading…</span>
                   ) : (
                     <UserAttributesList
                       ids={u.language_ids}
@@ -635,22 +680,24 @@ function UsersSection() {
                     />
                   )}
                 </td>
-                <td className={styles.muted}>
-                  {u.google_id ? "Google" : "Password"}
+                <td>
+                  <span className={`${styles.badge} ${styles.badgeUser}`}>
+                    {u.google_id ? "Google" : "Password"}
+                  </span>
                 </td>
                 <td>
                   <div className={styles.actionButtons}>
                     <button
-                      className={styles.btnGhost}
+                      className={`${styles.btnGhost} ${styles.btnGhostSm}`}
                       onClick={() => setEditingUser(u)}
                     >
                       Edit
                     </button>
                     <button
-                      className={styles.btnGhost}
+                      className={`${styles.btnGhost} ${styles.btnGhostSm}`}
                       onClick={() => setPasswordUser(u)}
                     >
-                      Reset Password
+                      Reset password
                     </button>
                   </div>
                 </td>
@@ -662,7 +709,7 @@ function UsersSection() {
 
       {/* ── Modals ── */}
       {showForm && (
-        <Modal title="Add New User" onClose={() => setShowForm(false)}>
+        <Modal title="Add user" onClose={() => setShowForm(false)}>
           <CreateUserForm
             subjects={subjects}
             languages={languages}
@@ -676,7 +723,7 @@ function UsersSection() {
       )}
 
       {editingUser && (
-        <Modal title="Edit User" onClose={() => setEditingUser(null)}>
+        <Modal title="Edit user" onClose={() => setEditingUser(null)}>
           <EditUserForm
             user={editingUser}
             subjects={subjects}
@@ -691,7 +738,7 @@ function UsersSection() {
       )}
 
       {passwordUser && (
-        <Modal title="Reset Password" onClose={() => setPasswordUser(null)}>
+        <Modal title="Reset password" onClose={() => setPasswordUser(null)}>
           <ResetPasswordForm
             user={passwordUser}
             onSaved={() => {
@@ -717,6 +764,8 @@ function CreateUserForm({
   onCreated: () => void;
   onCancel: () => void;
 }) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -727,6 +776,14 @@ function CreateUserForm({
   const [error, setError] = useState<string | null>(null);
 
   async function create() {
+    if (!firstName.trim()) {
+      setError("First name is required.");
+      return;
+    }
+    if (!lastName.trim()) {
+      setError("Last name is required.");
+      return;
+    }
     if (!email.trim()) {
       setError("Email is required.");
       return;
@@ -736,6 +793,8 @@ function CreateUserForm({
     try {
       await usersApi.create({
         email: email.trim(),
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
         password: password || undefined,
         is_admin: isAdmin,
         roles,
@@ -752,6 +811,33 @@ function CreateUserForm({
 
   return (
     <div className={styles.formInner}>
+      <div className={styles.fieldRow}>
+        <div className={styles.field}>
+          <label className={styles.label}>First name</label>
+          <input
+            className={styles.input}
+            value={firstName}
+            onChange={(e) => {
+              setFirstName(e.target.value);
+              setError(null);
+            }}
+            placeholder="Amina"
+          />
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label}>Last name</label>
+          <input
+            className={styles.input}
+            value={lastName}
+            onChange={(e) => {
+              setLastName(e.target.value);
+              setError(null);
+            }}
+            placeholder="Yusuf"
+          />
+        </div>
+      </div>
+
       <div className={styles.fieldRow}>
         <div className={styles.field}>
           <label className={styles.label}>Email</label>
@@ -773,7 +859,7 @@ function CreateUserForm({
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Leave blank for Google"
+            placeholder="Leave blank for Google sign-in"
           />
         </div>
       </div>
@@ -784,14 +870,14 @@ function CreateUserForm({
           checked={isAdmin}
           onChange={(e) => setIsAdmin(e.target.checked)}
         />
-        <span>Grant admin access</span>
+        <span>Admin access</span>
       </label>
 
       <RoleCheckboxes selected={roles} onChange={setRoles} />
 
       {roles.includes("TEACHER") && (
         <MultiSelect
-          label="Subjects they can teach"
+          label="Teaching subjects"
           options={subjects}
           selected={teachingSubjectIds}
           onChange={setTeachingSubjectIds}
@@ -800,7 +886,7 @@ function CreateUserForm({
 
       {roles.includes("TRANSLATOR") && (
         <MultiSelect
-          label="Languages they can translate into"
+          label="Translation languages"
           options={languages}
           selected={languageIds}
           onChange={setLanguageIds}

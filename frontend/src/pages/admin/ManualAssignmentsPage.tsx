@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { tasksApi } from "../../api/tasks";
 import { useUserLookups } from "../../hooks/useUserLookups";
 import { crumbText, kindLabel } from "../../lib/taskLabels";
+import { displayName, fullName, initials } from "../../lib/userName";
 import type { TaskView } from "../../types/topics";
 import styles from "./ManualAssignmentsPage.module.css";
 
@@ -9,6 +10,23 @@ interface EligibleUser {
   id: number;
   email: string;
   avatar_url: string | null;
+  first_name: string | null;
+  last_name: string | null;
+}
+
+// A task carries its assignee as an already-joined `assignee_name`, so hand that
+// string to the shared helpers whole (label) and word-split (avatar letters only).
+function assigneeIdentity(task: TaskView) {
+  const email = task.assignee_email ?? "";
+  const words = task.assignee_name?.trim().split(/\s+/).filter(Boolean) ?? [];
+  return {
+    label: displayName({ email, first_name: task.assignee_name }),
+    letters: initials({
+      email,
+      first_name: words[0],
+      last_name: words.length > 1 ? words[words.length - 1] : null,
+    }),
+  };
 }
 
 export default function ManualAssignmentsPage() {
@@ -24,6 +42,9 @@ export default function ManualAssignmentsPage() {
   const [selectedType, setSelectedType] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [userQuery, setUserQuery] = useState("");
+
+  // Rows with their details expander open
+  const [expandedTaskIds, setExpandedTaskIds] = useState<Set<number>>(new Set());
 
   // Modal editing state
   const [selectedTask, setSelectedTask] = useState<TaskView | null>(null);
@@ -113,6 +134,18 @@ export default function ManualAssignmentsPage() {
     }
   };
 
+  const toggleDetails = (taskId: number) => {
+    setExpandedTaskIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        next.add(taskId);
+      }
+      return next;
+    });
+  };
+
   // Status style helper
   const getStatusClassName = (status: string) => {
     switch (status) {
@@ -168,11 +201,12 @@ export default function ManualAssignmentsPage() {
       !selectedLanguage ||
       (t.language_id && String(t.language_id) === selectedLanguage);
 
-    // 6. Assigned User filter
+    // 6. Assigned User filter (name or email)
+    const userNeedle = userQuery.toLowerCase();
     const matchesUser =
       !userQuery ||
-      (t.assignee_email &&
-        t.assignee_email.toLowerCase().includes(userQuery.toLowerCase()));
+      (t.assignee_email && t.assignee_email.toLowerCase().includes(userNeedle)) ||
+      (t.assignee_name && t.assignee_name.toLowerCase().includes(userNeedle));
 
     return (
       matchesSearch &&
@@ -275,7 +309,7 @@ export default function ManualAssignmentsPage() {
           <input
             type="text"
             className={styles.filterInput}
-            placeholder="Search email..."
+            placeholder="Search name or email..."
             value={userQuery}
             onChange={(e) => setUserQuery(e.target.value)}
           />
@@ -304,7 +338,7 @@ export default function ManualAssignmentsPage() {
                 <th>Status</th>
                 <th>Assignee</th>
                 <th>Created / Completed</th>
-                <th style={{ width: 100, textAlign: "right" }}>Actions</th>
+                <th style={{ width: 180, textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -315,54 +349,144 @@ export default function ManualAssignmentsPage() {
                 const dateCompleted = t.completed_at
                   ? new Date(t.completed_at).toLocaleDateString()
                   : null;
+                const assignee = assigneeIdentity(t);
+                const isExpanded = expandedTaskIds.has(t.id);
 
                 return (
-                  <tr key={t.id}>
-                    <td>
-                      <div className="pageSub" style={{ fontSize: "0.75rem", marginBottom: 2 }}>
-                        {crumbText(t)}
-                      </div>
-                      <strong style={{ fontSize: "0.9rem" }}>
-                        {t.topic_name || `Topic #${t.topic_id}`}
-                      </strong>
-                    </td>
-                    <td>
-                      <span className="pill pill--stone">{kindLabel(t)}</span>
-                    </td>
-                    <td>
-                      <span className={getStatusClassName(t.status)}>{t.status}</span>
-                    </td>
-                    <td>
-                      {t.assignee_email ? (
-                        <div className={styles.userCell}>
-                          <div className={styles.userAvatar}>
-                            {t.assignee_email.substring(0, 2).toUpperCase()}
+                  <Fragment key={t.id}>
+                    <tr>
+                      <td>
+                        <div className="pageSub" style={{ fontSize: "0.75rem", marginBottom: 2 }}>
+                          {crumbText(t)}
+                        </div>
+                        <strong style={{ fontSize: "0.9rem" }}>
+                          {t.topic_name || `Topic #${t.topic_id}`}
+                        </strong>
+                      </td>
+                      <td>
+                        <span className="pill pill--stone">{kindLabel(t)}</span>
+                      </td>
+                      <td>
+                        <span className={getStatusClassName(t.status)}>{t.status}</span>
+                      </td>
+                      <td>
+                        {t.assignee_email ? (
+                          <div className={styles.userCell}>
+                            <div className={styles.userAvatar}>{assignee.letters}</div>
+                            <div className={styles.userText}>
+                              <span className={styles.userName}>{assignee.label}</span>
+                              {t.assignee_name && (
+                                <span className={styles.userEmail}>{t.assignee_email}</span>
+                              )}
+                            </div>
                           </div>
-                          <span>{t.assignee_email}</span>
+                        ) : (
+                          <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
+                            Unassigned
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ fontSize: "0.8rem" }}>Created: {dateCreated}</div>
+                        {dateCompleted && (
+                          <div style={{ fontSize: "0.8rem", color: "var(--brand)" }}>
+                            Done: {dateCompleted}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <div className={styles.rowActions}>
+                          <button
+                            className="btn btn--ghost btn--sm"
+                            onClick={() => toggleDetails(t.id)}
+                            aria-expanded={isExpanded}
+                          >
+                            <span className={styles.chevron} data-open={isExpanded}>
+                              ›
+                            </span>
+                            Details
+                          </button>
+                          <button
+                            className="btn btn--sm"
+                            onClick={() => handleEditTask(t)}
+                          >
+                            Manage
+                          </button>
                         </div>
-                      ) : (
-                        <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
-                          Unassigned
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <div style={{ fontSize: "0.8rem" }}>Created: {dateCreated}</div>
-                      {dateCompleted && (
-                        <div style={{ fontSize: "0.8rem", color: "var(--brand)" }}>
-                          Done: {dateCompleted}
-                        </div>
-                      )}
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      <button
-                        className="btn btn--sm"
-                        onClick={() => handleEditTask(t)}
-                      >
-                        Manage
-                      </button>
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr className={styles.detailsRow}>
+                        <td colSpan={6}>
+                          <div className={styles.detailsGrid}>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Curriculum Pathway</span>
+                              <span className={styles.detailValue}>{crumbText(t)}</span>
+                            </div>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Task</span>
+                              <span className={styles.detailValue}>{kindLabel(t)}</span>
+                            </div>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Status</span>
+                              <span className={styles.detailValue}>{t.status}</span>
+                            </div>
+                            {t.status === "QUEUED" && (
+                              <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Queue Position</span>
+                                <span className={styles.detailValue}>#{t.queue_order}</span>
+                              </div>
+                            )}
+                            {t.requested_at && (
+                              <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Requested</span>
+                                <span className={styles.detailValue}>
+                                  {new Date(t.requested_at).toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+                            {t.claimed_at && (
+                              <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Claimed</span>
+                                <span className={styles.detailValue}>
+                                  {new Date(t.claimed_at).toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+                            {t.released_at && (
+                              <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Released</span>
+                                <span className={styles.detailValue}>
+                                  {new Date(t.released_at).toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+                            {t.completed_at && (
+                              <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Completed</span>
+                                <span className={styles.detailValue}>
+                                  {new Date(t.completed_at).toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+                            {t.caption_s3_url && (
+                              <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Captions</span>
+                                <a
+                                  className={styles.detailLink}
+                                  href={t.caption_s3_url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Caption file
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 );
               })}
             </tbody>
@@ -456,11 +580,14 @@ export default function ManualAssignmentsPage() {
                             {selectedTask.assignee_email} (Current Assignee)
                           </option>
                         )}
-                      {eligibleUsers.map((u) => (
-                        <option key={u.id} value={u.email}>
-                          {u.email}
-                        </option>
-                      ))}
+                      {eligibleUsers.map((u) => {
+                        const name = fullName(u);
+                        return (
+                          <option key={u.id} value={u.email}>
+                            {name ? `${name} — ${u.email}` : u.email}
+                          </option>
+                        );
+                      })}
                     </select>
                   )}
                 </div>

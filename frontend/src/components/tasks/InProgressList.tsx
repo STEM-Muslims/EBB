@@ -1,90 +1,57 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { tasksApi } from "../api/tasks";
-import { topicsApi } from "../api/topics";
-import { useAdmin } from "../hooks/useAdmin";
-import { crumbText, kindLabel } from "../lib/taskLabels";
-import type { TaskView } from "../types/topics";
-import styles from "./user/user.module.css";
+import { tasksApi } from "../../api/tasks";
+import { topicsApi } from "../../api/topics";
+import TaskDetailsToggle from "./TaskDetails";
+import { useAdmin } from "../../hooks/useAdmin";
+import { crumbText, kindLabel } from "../../lib/taskLabels";
+import type { TaskView } from "../../types/topics";
 
-/** Tasks currently being worked on; filterable to just the viewer's own, where
- * they also get the upload / release controls. */
-export default function InProgressPage() {
+/** Tasks currently being worked on; the viewer's own carry the upload / release
+ * controls. The owning page holds the data, the All / by-you filter and the
+ * count, so this renders whatever it is handed. */
+export default function InProgressList({
+  tasks,
+  state,
+  onlyMine,
+  onReload,
+}: {
+  tasks: TaskView[];
+  state: "loading" | "ready" | "error";
+  onlyMine: boolean;
+  onReload: () => void;
+}) {
   const { isAdmin, email } = useAdmin();
   const detailBase = isAdmin ? "/admin/topics" : "/topics";
 
-  const [tasks, setTasks] = useState<TaskView[]>([]);
-  const [onlyMine, setOnlyMine] = useState(false);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-
-  const load = useCallback(async () => {
-    try {
-      setTasks(await tasksApi.getInProgress());
-      setStatus("ready");
-    } catch {
-      setStatus("error");
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const visible = useMemo(
-    () => (onlyMine ? tasks.filter((t) => t.assignee_email === email) : tasks),
-    [tasks, onlyMine, email],
-  );
-
   return (
-    <div className="pageWrap" style={{ maxWidth: 820 }}>
-      <div className="pageHead">
-        <div className="pageHeadText">
-          <span className="pageEyebrow">Tasks</span>
-          <h1>In progress</h1>
-          <p className="pageSub">
-            Tasks currently being worked on. Yours show upload and release controls.
-          </p>
-        </div>
-        <div className="pageActions">
-          {status === "ready" && (
-            <span className="pill pill--stone">
-              {visible.length} {visible.length === 1 ? "task" : "tasks"}
-            </span>
-          )}
-          <button
-            type="button"
-            className={`btn btn--secondary btn--sm ${onlyMine ? styles.filterOn : ""}`}
-            onClick={() => setOnlyMine((v) => !v)}
-          >
-            {onlyMine ? "By me" : "All"}
-          </button>
-        </div>
-      </div>
-
-      {status === "loading" && (
+    <>
+      {state === "loading" && (
         <div className="loadingState">
           <div className="spinner"></div>
           <span>Loading…</span>
         </div>
       )}
-      {status === "error" && <p className="emptyState">Couldn’t load tasks.</p>}
-      {status === "ready" && visible.length === 0 && (
-        <p className="emptyState">
-          {onlyMine
-            ? "You have no active task. Pick one up from the Task queue."
-            : "No tasks are being worked on."}
+      {state === "error" && (
+        <p className="emptyState" style={{ margin: 0 }}>
+          Couldn’t load tasks.
+        </p>
+      )}
+      {state === "ready" && tasks.length === 0 && (
+        <p className="emptyState" style={{ margin: 0 }}>
+          {onlyMine ? "You have no task in progress." : "Nothing is in progress."}
         </p>
       )}
 
-      {status === "ready" && visible.length > 0 && (
+      {state === "ready" && tasks.length > 0 && (
         <div className="stack" style={{ gap: "0.6rem" }}>
-          {visible.map((t) =>
+          {tasks.map((t) =>
             t.assignee_email === email ? (
               <MyTaskCard
                 key={t.id}
                 task={t}
                 detailBase={detailBase}
-                onDone={load}
+                onDone={onReload}
               />
             ) : (
               <div
@@ -103,14 +70,17 @@ export default function InProgressPage() {
                   </Link>{" "}
                   <span className="pill pill--stone">{kindLabel(t)}</span>
                   <div className="pageSub">{crumbText(t)}</div>
+                  <TaskDetailsToggle task={t} />
                 </div>
-                <span className="pageSub">{t.assignee_email}</span>
+                <span className="pageSub">
+                  {t.assignee_name ?? t.assignee_email}
+                </span>
               </div>
             ),
           )}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -158,6 +128,7 @@ function MyTaskCard({
       <p className="pageSub" style={{ margin: 0 }}>
         {crumbText(task)}
       </p>
+      <TaskDetailsToggle task={task} />
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
         <input
           ref={inputRef}

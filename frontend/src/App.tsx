@@ -7,7 +7,6 @@ import DashboardPage from "./pages/admin/DashboardPage";
 import TopicManagerPage from "./pages/TopicManagerPage";
 import TopicDetailPage from "./pages/TopicDetailPage";
 import TaskQueuePage from "./pages/TaskQueuePage";
-import InProgressPage from "./pages/InProgressPage";
 import QueueManagePage from "./pages/QueueManagePage";
 import VideoManagerPage from "./pages/VideoManagerPage";
 import ManualAssignmentsPage from "./pages/admin/ManualAssignmentsPage";
@@ -74,7 +73,7 @@ function App() {
                     element={<Navigate to="/admin/tasks/queue" replace />}
                   />
                   <Route path="/tasks/queue" element={<TaskQueuePage />} />
-                  <Route path="/tasks/in-progress" element={<InProgressPage />} />
+                  <Route path="/tasks/in-progress" element={<TaskQueuePage />} />
                   <Route path="/tasks/manage" element={<QueueManagePage />} />
                   <Route path="/tasks/assignments" element={<ManualAssignmentsPage />} />
                   <Route path="/videos" element={<VideoManagerPage />} />
@@ -103,7 +102,7 @@ function App() {
                     element={<Navigate to="/tasks/queue" replace />}
                   />
                   <Route path="/tasks/queue" element={<TaskQueuePage />} />
-                  <Route path="/tasks/in-progress" element={<InProgressPage />} />
+                  <Route path="/tasks/in-progress" element={<TaskQueuePage />} />
                   <Route path="/videos" element={<UserVideosPage />} />
                 </Routes>
               </Layout>

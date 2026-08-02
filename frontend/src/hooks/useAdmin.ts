@@ -7,6 +7,8 @@ const TOKEN_KEY = "admin_token";
 
 interface MeResponse {
   email: string;
+  first_name: string | null;
+  last_name: string | null;
   is_admin: boolean;
   avatar_url: string | null;
   roles: RoleType[];
@@ -20,6 +22,8 @@ export function storeAdminToken(token: string) {
 
 export function useAdmin() {
   const [email, setEmail] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [roles, setRoles] = useState<RoleType[]>([]);
   const [teachingSubjectIds, setTeachingSubjectIds] = useState<number[]>([]);
@@ -41,6 +45,8 @@ export function useAdmin() {
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: MeResponse) => {
         setEmail(data.email);
+        setFirstName(data.first_name ?? null);
+        setLastName(data.last_name ?? null);
         setIsAdmin(Boolean(data.is_admin));
         setRoles(data.roles ?? []);
         setTeachingSubjectIds(data.teaching_subject_ids ?? []);
@@ -61,6 +67,8 @@ export function useAdmin() {
 
   return {
     email,
+    firstName,
+    lastName,
     isAdmin,
     roles,
     teachingSubjectIds,

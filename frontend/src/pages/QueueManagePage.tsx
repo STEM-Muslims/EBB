@@ -3,7 +3,7 @@ import { tasksApi } from "../api/tasks";
 import QueueManager from "../components/topics/QueueManager";
 import type { TaskView } from "../types/topics";
 
-/** Admin-only: reorder the to-do queue and requeue released tasks. */
+/** Admin-only: review the to-do queue by subject and requeue released tasks. */
 export default function QueueManagePage() {
   const [queue, setQueue] = useState<TaskView[]>([]);
   const [released, setReleased] = useState<TaskView[]>([]);
@@ -12,7 +12,7 @@ export default function QueueManagePage() {
   const load = useCallback(async () => {
     try {
       const [q, r] = await Promise.all([
-        tasksApi.getQueue(),
+        tasksApi.getFullQueue(),
         tasksApi.getReleased(),
       ]);
       setQueue(q);
@@ -34,7 +34,8 @@ export default function QueueManagePage() {
           <span className="pageEyebrow">Tasks</span>
           <h1>Queue management</h1>
           <p className="pageSub">
-            Drag to reorder the to-do queue, and requeue released tasks.
+            The to-do queue, split by subject and newest first, plus released
+            tasks you can requeue.
           </p>
         </div>
       </div>

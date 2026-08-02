@@ -3,11 +3,8 @@ import { avatarApi, type RoleType } from "../api/users";
 import { topicsApi } from "../api/topics";
 import { languagesApi } from "../api/languages";
 import { downscaleToSquare } from "../lib/image";
+import { fullName, initials } from "../lib/userName";
 import styles from "./AccountMenu.module.css";
-
-function initials(email: string) {
-  return email.charAt(0).toUpperCase();
-}
 
 /** One role and the specific things the user holds under it. */
 function RoleLine({
@@ -54,6 +51,8 @@ function RoleLine({
  */
 export default function AccountMenu({
   email,
+  firstName,
+  lastName,
   roles,
   teachingSubjectIds,
   languageIds,
@@ -62,6 +61,8 @@ export default function AccountMenu({
   onLogout,
 }: {
   email: string;
+  firstName?: string | null;
+  lastName?: string | null;
   roles: RoleType[];
   teachingSubjectIds: number[];
   languageIds: number[];
@@ -82,6 +83,8 @@ export default function AccountMenu({
   const rootRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const identity = { email, first_name: firstName, last_name: lastName };
+  const name = fullName(identity);
   const isTeacher = roles.includes("TEACHER");
   const isTranslator = roles.includes("TRANSLATOR");
 
@@ -164,7 +167,7 @@ export default function AccountMenu({
   const avatarInner = avatar ? (
     <img src={avatar} alt="" className={styles.avatarImg} />
   ) : (
-    <span className={styles.avatarInitial}>{initials(email)}</span>
+    <span className={styles.avatarInitial}>{initials(identity)}</span>
   );
 
   return (
@@ -201,7 +204,15 @@ export default function AccountMenu({
           <div className={styles.profile}>
             <span className={styles.profileAvatar}>{avatarInner}</span>
             <div className={styles.profileText}>
-              <span className={styles.profileEmail} title={email}>
+              {name && (
+                <span className={styles.profileName} title={name}>
+                  {name}
+                </span>
+              )}
+              <span
+                className={`${styles.profileEmail} ${name ? styles.profileEmailSub : ""}`}
+                title={email}
+              >
                 {email}
               </span>
               <div className={styles.roleList}>

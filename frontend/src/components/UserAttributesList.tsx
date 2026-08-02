@@ -32,9 +32,9 @@ export const UserAttributesList: React.FC<UserAttributesListProps> = ({
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: "0.4rem 0.55rem",
+          gap: "0.3rem 0.4rem",
           alignItems: "center",
-          lineHeight: 1.6,
+          lineHeight: 1.4,
         }}
       >
       {visibleIds.map((id) => {

@@ -108,6 +108,15 @@
 .profileText {
     min-width: 0;
 }
+.profileName {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-h);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .profileEmail {
     display: block;
     font-weight: 600;
@@ -116,6 +125,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+.profileEmailSub {
+    font-weight: 500;
+    font-size: 0.78rem;
+    color: var(--text-muted);
 }
 .profileRoles {
     display: flex;

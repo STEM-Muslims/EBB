@@ -79,8 +79,11 @@ async def google_callback(code: str = None, error: str = None):
             _GOOGLE_USERINFO_URL,
             headers={"Authorization": f"Bearer {access_token}"},
         )
-        email = user_resp.json().get("email", "").lower()
-        google_id = user_resp.json().get("sub")
+        info = user_resp.json()
+        email = info.get("email", "").lower()
+        google_id = info.get("sub")
+        given_name = info.get("given_name")
+        family_name = info.get("family_name")
 
     if not email:
         return RedirectResponse(f"{FRONTEND_URL}/admin/login?error=AccessDenied")
@@ -89,8 +92,17 @@ async def google_callback(code: str = None, error: str = None):
         user = session.exec(select(User).where(User.email == email)).first()
         if not user:
             return RedirectResponse(f"{FRONTEND_URL}/admin/login?error=AccessDenied")
+        changed = False
         if not user.google_id:
             user.google_id = google_id
+            changed = True
+        if not user.first_name and given_name:
+            user.first_name = given_name
+            changed = True
+        if not user.last_name and family_name:
+            user.last_name = family_name
+            changed = True
+        if changed:
             session.add(session.merge(user))
             session.commit()
 
@@ -107,6 +119,8 @@ def get_me(
     profile = build_user_profile(current_user, session)
     return {
         "email": current_user.email,
+        "first_name": current_user.first_name,
+        "last_name": current_user.last_name,
         "is_admin": bool(current_user.is_admin),
         "avatar_url": current_user.avatar_url,
         **profile,

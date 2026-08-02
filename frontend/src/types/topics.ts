@@ -67,6 +67,10 @@ export interface TaskView extends Task {
   topic_name: string | null;
   breadcrumb: Breadcrumb[];
   language: Language | null;
+  /** Display name of `assignee_email`, when that user has one on record. */
+  assignee_name: string | null;
+  /** Whether the caller may claim this task — only set by GET /tasks/queue/all. */
+  eligible?: boolean;
 }
 
 /** A completed topic as returned by GET /topics/completed. */

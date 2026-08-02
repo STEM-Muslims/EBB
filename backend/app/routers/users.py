@@ -42,6 +42,8 @@ def _avatar_key_from_url(url: str | None) -> str | None:
 
 class CreateUserRequest(BaseModel):
     email: str
+    first_name: str
+    last_name: str
     password: str | None = None
     is_admin: bool = False
     roles: list[RoleType] = []
@@ -52,6 +54,8 @@ class CreateUserRequest(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: str
+    first_name: str | None
+    last_name: str | None
     is_admin: bool
     google_id: str | None
     avatar_url: str | None
@@ -63,6 +67,8 @@ class UserResponse(BaseModel):
 class UpdateUserRequest(BaseModel):
     email: str
     is_admin: bool
+    first_name: str | None = None
+    last_name: str | None = None
     roles: list[RoleType] = []
     teaching_subject_ids: list[int] = []
     language_ids: list[int] = []
@@ -96,6 +102,8 @@ def _user_response(user: User, session: Session) -> UserResponse:
     return UserResponse(
         id=user.id,
         email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name,
         is_admin=bool(user.is_admin),
         google_id=user.google_id,
         avatar_url=user.avatar_url,
@@ -288,6 +296,10 @@ def update_user(
 
     user.email = req.email
     user.is_admin = req.is_admin
+    if req.first_name is not None:
+        user.first_name = req.first_name.strip() or None
+    if req.last_name is not None:
+        user.last_name = req.last_name.strip() or None
     session.add(user)
 
     _sync_profile(
@@ -312,8 +324,15 @@ def create_user(user: CreateUserRequest, session: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    first_name = user.first_name.strip()
+    last_name = user.last_name.strip()
+    if not first_name or not last_name:
+        raise HTTPException(400, "First and last name are required")
+
     db_user = User(
         email=user.email,
+        first_name=first_name,
+        last_name=last_name,
         hashed_password=_pwd_context.hash(user.password) if user.password else None,
         is_admin=user.is_admin,
     )

@@ -29,6 +29,8 @@ export default function Layout({
 }) {
   const {
     email,
+    firstName,
+    lastName,
     isAdmin,
     roles,
     teachingSubjectIds,
@@ -73,6 +75,8 @@ export default function Layout({
           {email && (
             <AccountMenu
               email={email}
+              firstName={firstName}
+              lastName={lastName}
               roles={roles}
               teachingSubjectIds={teachingSubjectIds}
               languageIds={languageIds}

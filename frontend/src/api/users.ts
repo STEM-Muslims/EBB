@@ -35,6 +35,8 @@ export type RoleType = "TEACHER" | "TRANSLATOR";
 export interface AdminUser {
   id: number;
   email: string;
+  first_name: string | null;
+  last_name: string | null;
   is_admin: boolean;
   google_id: string | null;
   avatar_url: string | null;
@@ -53,7 +55,13 @@ export const usersApi = {
   getAll: () => request<AdminUser[]>("/users"),
 
   create: (
-    data: { email: string; password?: string; is_admin: boolean } & UserProfileInput,
+    data: {
+      email: string;
+      first_name: string;
+      last_name: string;
+      password?: string;
+      is_admin: boolean;
+    } & UserProfileInput,
   ) =>
     request<AdminUser>("/users", {
       method: "POST",
@@ -68,7 +76,12 @@ export const usersApi = {
 
   update: (
     id: number,
-    data: { email: string; is_admin: boolean } & UserProfileInput,
+    data: {
+      email: string;
+      is_admin: boolean;
+      first_name?: string;
+      last_name?: string;
+    } & UserProfileInput,
   ) =>
     request(`/users/${id}`, {
       method: "PATCH",

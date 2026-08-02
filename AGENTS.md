@@ -12,7 +12,7 @@ EBB (Education Beyond Borders) is a full-stack web application for managing educ
 *   **Language**: TypeScript
 *   **Styling**: Tailwind CSS (paired with SCSS modules as per the design spec)
 *   **Routing**: React Router v7
-*   **Key Libraries**: `@dnd-kit` for drag-and-drop interfaces
+*   **Key Libraries**: React Router v7; `@dnd-kit` is still a declared dependency but is no longer imported anywhere
 *   **Deployment**: Netlify (`netlify.toml` in the root)
 
 ### Backend (`/backend`)

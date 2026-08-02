@@ -76,18 +76,18 @@ export const tasksApi = {
   delete: (id: number) =>
       request<{ ok: boolean }>(`/tasks/${id}`, { method: "DELETE" }),
 
-  reorderQueue: (task_ids: number[]) =>
-    request<{ ok: boolean }>("/tasks/queue/reorder", {
-      method: "PATCH",
-      body: JSON.stringify({ task_ids }),
-    }),
-
   getAdminAll: () => request<TaskView[]>("/tasks/admin/all"),
 
   getEligibleUsers: (id: number) =>
-    request<{ id: number; email: string; avatar_url: string | null }[]>(
-      `/tasks/${id}/eligible-users`,
-    ),
+    request<
+      {
+        id: number;
+        email: string;
+        first_name: string | null;
+        last_name: string | null;
+        avatar_url: string | null;
+      }[]
+    >(`/tasks/${id}/eligible-users`),
 
   adminUpdate: (
     id: number,

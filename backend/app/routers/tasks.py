@@ -51,14 +51,33 @@ def _topics_by_id(session: Session) -> dict[int, Topic]:
     return {t.id: t for t in session.exec(select(Topic)).all()}
 
 
-def _enrich(session: Session, task: Task, by_id: dict[int, Topic]) -> dict:
+def _users_by_email(session: Session) -> dict[str, User]:
+    return {u.email: u for u in session.exec(select(User)).all()}
+
+
+def _full_name(user: User | None) -> str | None:
+    """A user's "First Last", or None when no name is on record."""
+    if not user:
+        return None
+    return " ".join(p for p in (user.first_name, user.last_name) if p) or None
+
+
+def _enrich(
+    session: Session,
+    task: Task,
+    by_id: dict[int, Topic],
+    users: dict[str, User] | None = None,
+) -> dict:
     topic = by_id.get(task.topic_id)
     language = session.get(Language, task.language_id) if task.language_id else None
+    if users is None:
+        users = _users_by_email(session)
     return {
         **task.model_dump(),
         "topic_name": topic.name if topic else None,
         "breadcrumb": _ancestors(by_id, topic) if topic else [],
         "language": language.model_dump() if language else None,
+        "assignee_name": _full_name(users.get(task.assignee_email or "")),
     }
 
 
@@ -166,29 +185,37 @@ def get_queue(
     """The to-do queue, oldest first. Non-admins see only tasks they're eligible
     for; this drives the get-task offer loop on the client."""
     by_id = _topics_by_id(session)
+    users = _users_by_email(session)
     queued = session.exec(
         select(Task)
         .where(Task.status == TaskStatus.QUEUED)
         .order_by(col(Task.queue_order))
     ).all()
     visible = [t for t in queued if _eligible(session, user, t, by_id)]
-    return [_enrich(session, t, by_id) for t in visible]
+    return [_enrich(session, t, by_id, users) for t in visible]
 
 
 @router.get("/queue/all")
 def get_full_queue(
     session: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ):
     """The full to-do queue (every QUEUED task), for visibility only. Claiming
     still goes through /queue + /claim, which enforce eligibility."""
     by_id = _topics_by_id(session)
+    users = _users_by_email(session)
     queued = session.exec(
         select(Task)
         .where(Task.status == TaskStatus.QUEUED)
         .order_by(col(Task.queue_order))
     ).all()
-    return [_enrich(session, t, by_id) for t in queued]
+    return [
+        {
+            **_enrich(session, t, by_id, users),
+            "eligible": _eligible(session, user, t, by_id),
+        }
+        for t in queued
+    ]
 
 
 @router.get("/in-progress")
@@ -198,12 +225,13 @@ def get_in_progress(
 ):
     """Tasks currently being worked on, visible to everyone."""
     by_id = _topics_by_id(session)
+    users = _users_by_email(session)
     rows = session.exec(
         select(Task)
         .where(Task.status == TaskStatus.IN_PROGRESS)
         .order_by(col(Task.claimed_at))
     ).all()
-    return [_enrich(session, t, by_id) for t in rows]
+    return [_enrich(session, t, by_id, users) for t in rows]
 
 
 @router.get("/mine")
@@ -213,13 +241,14 @@ def get_mine(
 ):
     """The caller's current task(s) — their working-on section."""
     by_id = _topics_by_id(session)
+    users = _users_by_email(session)
     rows = session.exec(
         select(Task).where(
             Task.assignee_email == user.email,
             Task.status == TaskStatus.IN_PROGRESS,
         )
     ).all()
-    return [_enrich(session, t, by_id) for t in rows]
+    return [_enrich(session, t, by_id, users) for t in rows]
 
 
 @router.get("/released")
@@ -229,12 +258,13 @@ def get_released(
 ):
     """Released tasks awaiting an admin to requeue them."""
     by_id = _topics_by_id(session)
+    users = _users_by_email(session)
     rows = session.exec(
         select(Task)
         .where(Task.status == TaskStatus.RELEASED)
         .order_by(col(Task.released_at).desc())
     ).all()
-    return [_enrich(session, t, by_id) for t in rows]
+    return [_enrich(session, t, by_id, users) for t in rows]
 
 
 # ── Reorder the queue (admin) ─────────────────────────────────────────────────
@@ -324,8 +354,8 @@ def requeue_task(
     _: str = Depends(require_admin),
 ):
     task = _get_task_or_404(session, task_id)
-    if task.status != TaskStatus.RELEASED:
-        raise HTTPException(400, "Only a released task can be requeued")
+    if task.status not in (TaskStatus.RELEASED, TaskStatus.CANCELLED):
+        raise HTTPException(400, "Only a released or cancelled task can be requeued")
 
     now = datetime.now(timezone.utc)
     task.status = TaskStatus.QUEUED
@@ -423,30 +453,6 @@ def delete_task(
     return {"ok": True}
 
 
-@router.post("/{task_id}/requeue")
-def requeue_task(
-    task_id: int,
-    session: Session = Depends(get_db),
-    _: str = Depends(require_admin),
-):
-    task = _get_task_or_404(session, task_id)
-    # Updated to allow requeuing CANCELLED tasks back into QUEUED
-    if task.status not in (TaskStatus.RELEASED, TaskStatus.CANCELLED):
-        raise HTTPException(400, "Only a released or cancelled task can be requeued")
-
-    now = datetime.now(timezone.utc)
-    task.status = TaskStatus.QUEUED
-    task.assignee_email = None
-    task.claimed_at = None
-    task.released_at = None
-    task.queue_order = _next_queue_order(session)
-    task.updated_at = now
-    session.add(task)
-    session.commit()
-    session.refresh(task)
-    _enriched_result = _enrich(session, task, _topics_by_id(session))
-
-
 @router.get("/admin/all")
 def get_all_tasks_for_admin(
     session: Session = Depends(get_db),
@@ -454,8 +460,9 @@ def get_all_tasks_for_admin(
 ):
     """Fetch all tasks in the system for admin manual control."""
     by_id = _topics_by_id(session)
+    users = _users_by_email(session)
     tasks = session.exec(select(Task).order_by(col(Task.created_at).desc())).all()
-    return [_enrich(session, t, by_id) for t in tasks]
+    return [_enrich(session, t, by_id, users) for t in tasks]
 
 
 @router.get("/{task_id}/eligible-users")
@@ -476,6 +483,8 @@ def get_eligible_users_for_task(
             eligible_list.append({
                 "id": user.id,
                 "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
                 "avatar_url": user.avatar_url
             })
     return eligible_list

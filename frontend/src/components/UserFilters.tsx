@@ -46,7 +46,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
   return (
     <div className={styles.filterContainer}>
       <div className={styles.controlsRow}>
-        <span className={styles.filterLabel}>Filter Users:</span>
+        <span className={styles.filterLabel}>Filter users:</span>
 
         {/* Subject Dropdown */}
         <select
@@ -56,7 +56,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
           onChange={(e) => handleSelectChange(e, selectedSubjects, onSubjectsChange)}
         >
           <option value="" disabled>
-            + Add Subject Filter…
+            + Add subject filter…
           </option>
           {subjects.map((s) => (
             <option key={s.id} value={s.id}>
@@ -73,7 +73,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
           onChange={(e) => handleSelectChange(e, selectedLanguages, onLanguagesChange)}
         >
           <option value="" disabled>
-            + Add Language Filter…
+            + Add language filter…
           </option>
           {languages.map((l) => (
             <option key={l.id} value={l.id}>
