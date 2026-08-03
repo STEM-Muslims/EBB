@@ -170,6 +170,9 @@ function EditUserForm({
   onCancel: () => void;
 }) {
   const [email, setEmail] = useState(user.email);
+  const [firstName, setFirstName] = useState(user.first_name ?? "");
+  const [surname, setSurname] = useState(user.surname ?? "");
+  const [phoneNumber, setPhoneNumber] = useState(user.phone_number ?? "");
   const [isAdmin, setIsAdmin] = useState(user.is_admin);
   const [roles, setRoles] = useState<RoleType[]>(user.roles ?? []);
   const [teachingSubjectIds, setTeachingSubjectIds] = useState<number[]>(
@@ -189,6 +192,9 @@ function EditUserForm({
       await usersApi.update(user.id, {
         email,
         is_admin: isAdmin,
+        first_name: firstName.trim() || null,
+        surname: surname.trim() || null,
+        phone_number: phoneNumber.trim() || null,
         roles,
         teaching_subject_ids: roles.includes("TEACHER") ? teachingSubjectIds : [],
         language_ids: roles.includes("TRANSLATOR") ? languageIds : [],
@@ -204,12 +210,41 @@ function EditUserForm({
 
   return (
     <div className={styles.formInner}>
+      <div className={styles.fieldRow}>
+        <div className={styles.field}>
+          <label className={styles.label}>First Name</label>
+          <input
+            className={styles.input}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label}>Surname</label>
+          <input
+            className={styles.input}
+            value={surname}
+            onChange={(e) => setSurname(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className={styles.field}>
         <label className={styles.label}>Email</label>
         <input
           className={styles.input}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label}>Phone Number</label>
+        <input
+          className={styles.input}
+          type="tel"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
         />
       </div>
 
@@ -497,10 +532,13 @@ function UsersSection() {
     const matchesLanguages =
       selectedLanguages.length === 0 ||
       selectedLanguages.every((id) => (u.language_ids || []).includes(id));
-    // Substring, case-insensitive. When a `name` field is added later,
-    // TODO extend this to also check u.name.toLowerCase().includes(query). when name field is added
+    // Substring, case-insensitive match against email, first name, or surname.
     const query = searchQuery.trim().toLowerCase();
-    const matchesSearch = query === "" || u.email.toLowerCase().includes(query);
+    const matchesSearch =
+      query === "" ||
+      u.email.toLowerCase().includes(query) ||
+      (u.first_name ?? "").toLowerCase().includes(query) ||
+      (u.surname ?? "").toLowerCase().includes(query);
 
     return matchesSubjects && matchesLanguages && matchesSearch;
   });
@@ -521,10 +559,10 @@ function UsersSection() {
         <input
           type="text"
           className={styles.searchInput}
-          placeholder="Search by email…"
+          placeholder="Search by name or email…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          aria-label="Search users by email"
+          aria-label="Search users by name or email"
         />
       )}
 
@@ -568,16 +606,20 @@ function UsersSection() {
       ) : (
         <table className={styles.table}>
           <colgroup>
-            <col style={{ width: "22%" }} />
-            <col style={{ width: "12%" }} />
-            <col style={{ width: "24%" }} />
-            <col style={{ width: "24%" }} />
-            <col style={{ width: "8%" }} />
+            <col style={{ width: "13%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "11%" }} />
             <col style={{ width: "10%" }} />
+            <col style={{ width: "17%" }} />
+            <col style={{ width: "17%" }} />
+            <col style={{ width: "6%" }} />
+            <col style={{ width: "8%" }} />
           </colgroup>
           <thead>
             <tr>
+              <th>Name</th>
               <th>Email</th>
+              <th>Phone</th>
               <th>Role</th>
               <th>Teaching Subjects</th>
               <th>Spoken Languages</th>
@@ -588,7 +630,13 @@ function UsersSection() {
           <tbody>
             {filteredUsers.map((u) => (
               <tr key={u.id}>
+                <td className={styles.emailCell}>
+                  {[u.first_name, u.surname].filter(Boolean).join(" ") || (
+                    <span className={styles.muted}>—</span>
+                  )}
+                </td>
                 <td className={styles.emailCell}>{u.email}</td>
+                <td className={styles.muted}>{u.phone_number || "—"}</td>
                 <td>
                   <div className={styles.roleCell}>
                     {u.is_admin && (
@@ -718,6 +766,9 @@ function CreateUserForm({
   onCancel: () => void;
 }) {
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [surname, setSurname] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [roles, setRoles] = useState<RoleType[]>([]);
@@ -738,6 +789,9 @@ function CreateUserForm({
         email: email.trim(),
         password: password || undefined,
         is_admin: isAdmin,
+        first_name: firstName.trim() || null,
+        surname: surname.trim() || null,
+        phone_number: phoneNumber.trim() || null,
         roles,
         teaching_subject_ids: roles.includes("TEACHER") ? teachingSubjectIds : [],
         language_ids: roles.includes("TRANSLATOR") ? languageIds : [],
@@ -752,6 +806,25 @@ function CreateUserForm({
 
   return (
     <div className={styles.formInner}>
+      <div className={styles.fieldRow}>
+        <div className={styles.field}>
+          <label className={styles.label}>First Name</label>
+          <input
+            className={styles.input}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label}>Surname</label>
+          <input
+            className={styles.input}
+            value={surname}
+            onChange={(e) => setSurname(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className={styles.fieldRow}>
         <div className={styles.field}>
           <label className={styles.label}>Email</label>
@@ -776,6 +849,16 @@ function CreateUserForm({
             placeholder="Leave blank for Google"
           />
         </div>
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label}>Phone Number</label>
+        <input
+          className={styles.input}
+          type="tel"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+        />
       </div>
 
       <label className={styles.checkboxRow}>
