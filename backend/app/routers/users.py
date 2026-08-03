@@ -42,10 +42,11 @@ def _avatar_key_from_url(url: str | None) -> str | None:
 
 class CreateUserRequest(BaseModel):
     email: str
-    first_name: str
-    last_name: str
+    first_name: str | None = None
+    last_name: str | None = None
     password: str | None = None
     is_admin: bool = False
+    phone_number: str | None = None
     roles: list[RoleType] = []
     teaching_subject_ids: list[int] = []
     language_ids: list[int] = []
@@ -59,6 +60,7 @@ class UserResponse(BaseModel):
     is_admin: bool
     google_id: str | None
     avatar_url: str | None
+    phone_number: str | None = None
     roles: list[RoleType]
     teaching_subject_ids: list[int]
     language_ids: list[int]
@@ -69,6 +71,7 @@ class UpdateUserRequest(BaseModel):
     is_admin: bool
     first_name: str | None = None
     last_name: str | None = None
+    phone_number: str | None = None
     roles: list[RoleType] = []
     teaching_subject_ids: list[int] = []
     language_ids: list[int] = []
@@ -107,6 +110,7 @@ def _user_response(user: User, session: Session) -> UserResponse:
         is_admin=bool(user.is_admin),
         google_id=user.google_id,
         avatar_url=user.avatar_url,
+        phone_number=user.phone_number,
         **build_user_profile(user, session),
     )
 
@@ -162,6 +166,30 @@ def _sync_profile(
     for language_id in dict.fromkeys(language_ids):
         session.add(UserLanguage(user_id=user.id, language_id=language_id))
 
+
+class UpdateProfileRequest(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    phone_number: str | None = None
+
+@router.patch("/users/me/profile")
+def update_own_profile(
+    req: UpdateProfileRequest,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    user = session.exec(select(User).where(User.email == current_user.email)).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    user.first_name = req.first_name
+    user.last_name = req.last_name
+    user.phone_number = req.phone_number
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return _user_response(user, session)
 
 @router.patch("/users/me/password")
 def change_own_password(
@@ -300,6 +328,7 @@ def update_user(
         user.first_name = req.first_name.strip() or None
     if req.last_name is not None:
         user.last_name = req.last_name.strip() or None
+    user.phone_number = req.phone_number
     session.add(user)
 
     _sync_profile(
@@ -324,17 +353,13 @@ def create_user(user: CreateUserRequest, session: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    first_name = user.first_name.strip()
-    last_name = user.last_name.strip()
-    if not first_name or not last_name:
-        raise HTTPException(400, "First and last name are required")
-
     db_user = User(
         email=user.email,
-        first_name=first_name,
-        last_name=last_name,
+        first_name=(user.first_name or "").strip() or None,
+        last_name=(user.last_name or "").strip() or None,
         hashed_password=_pwd_context.hash(user.password) if user.password else None,
         is_admin=user.is_admin,
+        phone_number=user.phone_number,
     )
     session.add(db_user)
     session.flush()

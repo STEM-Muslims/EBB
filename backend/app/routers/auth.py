@@ -123,6 +123,7 @@ def get_me(
         "last_name": current_user.last_name,
         "is_admin": bool(current_user.is_admin),
         "avatar_url": current_user.avatar_url,
+        "phone_number": current_user.phone_number,
         **profile,
     }
 

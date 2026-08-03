@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { avatarApi, type RoleType } from "../api/users";
 import { topicsApi } from "../api/topics";
 import { languagesApi } from "../api/languages";
@@ -58,6 +59,7 @@ export default function AccountMenu({
   languageIds,
   isAdmin,
   avatarUrl,
+  profileTo,
   onLogout,
 }: {
   email: string;
@@ -68,6 +70,7 @@ export default function AccountMenu({
   languageIds: number[];
   isAdmin: boolean;
   avatarUrl: string | null;
+  profileTo: string;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -249,6 +252,20 @@ export default function AccountMenu({
           </div>
 
           {error && <p className={styles.error}>{error}</p>}
+
+          <div className={styles.section}>
+            <Link
+              to={profileTo}
+              className={styles.item}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+            >
+              <span className={styles.itemIcon} aria-hidden="true">
+                ◈
+              </span>
+              My Profile
+            </Link>
+          </div>
 
           <div className={styles.section}>
             <button

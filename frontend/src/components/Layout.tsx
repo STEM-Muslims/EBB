@@ -82,6 +82,7 @@ export default function Layout({
               languageIds={languageIds}
               isAdmin={isAdmin}
               avatarUrl={avatarUrl}
+              profileTo={isAdmin ? "/admin/profile" : "/profile"}
               onLogout={logout}
             />
           )}

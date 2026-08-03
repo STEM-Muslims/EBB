@@ -178,6 +178,7 @@ function EditUserForm({
   const [email, setEmail] = useState(user.email);
   const [firstName, setFirstName] = useState(user.first_name ?? "");
   const [lastName, setLastName] = useState(user.last_name ?? "");
+  const [phoneNumber, setPhoneNumber] = useState(user.phone_number ?? "");
   const [isAdmin, setIsAdmin] = useState(user.is_admin);
   const [roles, setRoles] = useState<RoleType[]>(user.roles ?? []);
   const [teachingSubjectIds, setTeachingSubjectIds] = useState<number[]>(
@@ -196,9 +197,10 @@ function EditUserForm({
     try {
       await usersApi.update(user.id, {
         email,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
+        first_name: firstName.trim() || null,
+        last_name: lastName.trim() || null,
         is_admin: isAdmin,
+        phone_number: phoneNumber.trim() || null,
         roles,
         teaching_subject_ids: roles.includes("TEACHER") ? teachingSubjectIds : [],
         language_ids: roles.includes("TRANSLATOR") ? languageIds : [],
@@ -239,6 +241,16 @@ function EditUserForm({
           className={styles.input}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label}>Phone Number</label>
+        <input
+          className={styles.input}
+          type="tel"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
         />
       </div>
 
@@ -606,16 +618,18 @@ function UsersSection() {
       ) : (
         <table className={styles.table}>
           <colgroup>
-            <col style={{ width: "27%" }} />
-            <col style={{ width: "11%" }} />
-            <col style={{ width: "17%" }} />
-            <col style={{ width: "17%" }} />
-            <col style={{ width: "9%" }} />
-            <col style={{ width: "19%" }} />
+            <col style={{ width: "24%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "14%" }} />
           </colgroup>
           <thead>
             <tr>
               <th>User</th>
+              <th>Phone</th>
               <th>Role</th>
               <th>Teaching subjects</th>
               <th>Languages</th>
@@ -634,6 +648,7 @@ function UsersSection() {
                     )}
                   </div>
                 </td>
+                <td className={styles.muted}>{u.phone_number || "—"}</td>
                 <td>
                   <div className={styles.roleCell}>
                     {u.is_admin && (
@@ -767,6 +782,7 @@ function CreateUserForm({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [roles, setRoles] = useState<RoleType[]>([]);
@@ -776,14 +792,6 @@ function CreateUserForm({
   const [error, setError] = useState<string | null>(null);
 
   async function create() {
-    if (!firstName.trim()) {
-      setError("First name is required.");
-      return;
-    }
-    if (!lastName.trim()) {
-      setError("Last name is required.");
-      return;
-    }
     if (!email.trim()) {
       setError("Email is required.");
       return;
@@ -793,10 +801,11 @@ function CreateUserForm({
     try {
       await usersApi.create({
         email: email.trim(),
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
+        first_name: firstName.trim() || null,
+        last_name: lastName.trim() || null,
         password: password || undefined,
         is_admin: isAdmin,
+        phone_number: phoneNumber.trim() || null,
         roles,
         teaching_subject_ids: roles.includes("TEACHER") ? teachingSubjectIds : [],
         language_ids: roles.includes("TRANSLATOR") ? languageIds : [],
@@ -862,6 +871,16 @@ function CreateUserForm({
             placeholder="Leave blank for Google sign-in"
           />
         </div>
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label}>Phone Number</label>
+        <input
+          className={styles.input}
+          type="tel"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+        />
       </div>
 
       <label className={styles.checkboxRow}>

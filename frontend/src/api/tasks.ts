@@ -64,6 +64,8 @@ export const tasksApi = {
 
   getReleased: () => request<TaskView[]>("/tasks/released"),
 
+  getHistory: () => request<TaskView[]>("/tasks/history"),
+
   claim: (id: number) =>
     request<TaskView>(`/tasks/${id}/claim`, { method: "POST" }),
 

@@ -11,6 +11,7 @@ interface MeResponse {
   last_name: string | null;
   is_admin: boolean;
   avatar_url: string | null;
+  phone_number: string | null;
   roles: RoleType[];
   teaching_subject_ids: number[];
   language_ids: number[];
@@ -29,6 +30,7 @@ export function useAdmin() {
   const [teachingSubjectIds, setTeachingSubjectIds] = useState<number[]>([]);
   const [languageIds, setLanguageIds] = useState<number[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -52,6 +54,7 @@ export function useAdmin() {
         setTeachingSubjectIds(data.teaching_subject_ids ?? []);
         setLanguageIds(data.language_ids ?? []);
         setAvatarUrl(data.avatar_url ?? null);
+        setPhoneNumber(data.phone_number ?? null);
       })
       .catch(() => {
         localStorage.removeItem(TOKEN_KEY);
@@ -74,6 +77,7 @@ export function useAdmin() {
     teachingSubjectIds,
     languageIds,
     avatarUrl,
+    phoneNumber,
     loading,
     logout,
   };

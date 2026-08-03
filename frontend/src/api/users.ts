@@ -40,6 +40,7 @@ export interface AdminUser {
   is_admin: boolean;
   google_id: string | null;
   avatar_url: string | null;
+  phone_number: string | null;
   roles: RoleType[];
   teaching_subject_ids: number[];
   language_ids: number[];
@@ -49,24 +50,30 @@ export interface UserProfileInput {
   roles: RoleType[];
   teaching_subject_ids: number[];
   language_ids: number[];
+  first_name?: string | null;
+  last_name?: string | null;
+  phone_number?: string | null;
 }
 
 export const usersApi = {
   getAll: () => request<AdminUser[]>("/users"),
 
   create: (
-    data: {
-      email: string;
-      first_name: string;
-      last_name: string;
-      password?: string;
-      is_admin: boolean;
-    } & UserProfileInput,
+    data: { email: string; password?: string; is_admin: boolean } & UserProfileInput,
   ) =>
     request<AdminUser>("/users", {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  updateProfile: (data: {
+    first_name: string | null;
+    last_name: string | null;
+    phone_number: string | null;
+  }) => request<AdminUser>("/users/me/profile", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  }),
 
   changePassword: (password: string) =>
     request<{ ok: boolean }>("/users/me/password", {
@@ -76,12 +83,7 @@ export const usersApi = {
 
   update: (
     id: number,
-    data: {
-      email: string;
-      is_admin: boolean;
-      first_name?: string;
-      last_name?: string;
-    } & UserProfileInput,
+    data: { email: string; is_admin: boolean } & UserProfileInput,
   ) =>
     request(`/users/${id}`, {
       method: "PATCH",

@@ -251,6 +251,25 @@ def get_mine(
     return [_enrich(session, t, by_id, users) for t in rows]
 
 
+@router.get("/history")
+def get_history(
+    session: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """The caller's completed tasks, most recently finished first."""
+    by_id = _topics_by_id(session)
+    users = _users_by_email(session)
+    rows = session.exec(
+        select(Task)
+        .where(
+            Task.assignee_email == user.email,
+            Task.status == TaskStatus.COMPLETED,
+        )
+        .order_by(col(Task.completed_at).desc())
+    ).all()
+    return [_enrich(session, t, by_id, users) for t in rows]
+
+
 @router.get("/released")
 def get_released(
     session: Session = Depends(get_db),
