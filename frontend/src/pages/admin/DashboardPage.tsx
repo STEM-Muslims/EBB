@@ -618,13 +618,13 @@ function UsersSection() {
       ) : (
         <table className={styles.table}>
           <colgroup>
-            <col style={{ width: "24%" }} />
+            <col style={{ width: "26%" }} />
             <col style={{ width: "12%" }} />
             <col style={{ width: "10%" }} />
-            <col style={{ width: "16%" }} />
-            <col style={{ width: "16%" }} />
+            <col style={{ width: "17%" }} />
+            <col style={{ width: "17%" }} />
             <col style={{ width: "8%" }} />
-            <col style={{ width: "14%" }} />
+            <col style={{ width: "10%" }} />
           </colgroup>
           <thead>
             <tr>
@@ -703,16 +703,22 @@ function UsersSection() {
                 <td>
                   <div className={styles.actionButtons}>
                     <button
-                      className={`${styles.btnGhost} ${styles.btnGhostSm}`}
+                      type="button"
+                      className={styles.iconBtn}
                       onClick={() => setEditingUser(u)}
+                      aria-label="Edit user"
+                      title="Edit"
                     >
-                      Edit
+                      ✎
                     </button>
                     <button
-                      className={`${styles.btnGhost} ${styles.btnGhostSm}`}
+                      type="button"
+                      className={styles.iconBtn}
                       onClick={() => setPasswordUser(u)}
+                      aria-label="Reset password"
+                      title="Reset password"
                     >
-                      Reset password
+                      ⚿
                     </button>
                   </div>
                 </td>

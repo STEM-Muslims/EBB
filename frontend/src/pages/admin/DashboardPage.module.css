@@ -298,7 +298,12 @@
 
 .table th:last-child,
 .table td:last-child {
-    padding-right: 0;
+    padding-right: 8px;
+}
+
+.table th:first-child,
+.table td:first-child {
+    padding-left: 8px;
 }
 
 .table th.thActions {
@@ -429,9 +434,27 @@
     background: var(--bg);
 }
 
-.btnGhostSm {
-    padding: 4px 9px;
-    font-size: 12px;
+.iconBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    background: none;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s, border-color 0.15s;
+}
+
+.iconBtn:hover {
+    background: var(--bg);
+    color: var(--brand);
+    border-color: var(--brand);
 }
 
 .btnDanger {
