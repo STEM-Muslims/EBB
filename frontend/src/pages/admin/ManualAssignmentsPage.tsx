@@ -354,7 +354,11 @@ export default function ManualAssignmentsPage() {
 
                 return (
                   <Fragment key={t.id}>
-                    <tr>
+                    <tr
+                      onClick={() => toggleDetails(t.id)}
+                      aria-expanded={isExpanded}
+                      style={{ cursor: "pointer" }}
+                    >
                       <td>
                         <div className="pageSub" style={{ fontSize: "0.75rem", marginBottom: 2 }}>
                           {crumbText(t)}
@@ -396,19 +400,15 @@ export default function ManualAssignmentsPage() {
                       </td>
                       <td style={{ textAlign: "right" }}>
                         <div className={styles.rowActions}>
-                          <button
-                            className="btn btn--ghost btn--sm"
-                            onClick={() => toggleDetails(t.id)}
-                            aria-expanded={isExpanded}
-                          >
-                            <span className={styles.chevron} data-open={isExpanded}>
-                              ›
-                            </span>
-                            Details
-                          </button>
+                          <span className={styles.chevron} data-open={isExpanded}>
+                            ›
+                          </span>
                           <button
                             className="btn btn--sm"
-                            onClick={() => handleEditTask(t)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditTask(t);
+                            }}
                           >
                             Manage
                           </button>
@@ -427,6 +427,17 @@ export default function ManualAssignmentsPage() {
                               <span className={styles.detailLabel}>Task</span>
                               <span className={styles.detailValue}>{kindLabel(t)}</span>
                             </div>
+                            {t.topic_notes && (
+                              <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Notes</span>
+                                <span
+                                  className={styles.detailValue}
+                                  style={{ whiteSpace: "pre-wrap" }}
+                                >
+                                  {t.topic_notes}
+                                </span>
+                              </div>
+                            )}
                             <div className={styles.detailItem}>
                               <span className={styles.detailLabel}>Status</span>
                               <span className={styles.detailValue}>{t.status}</span>

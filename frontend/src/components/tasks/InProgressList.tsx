@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { tasksApi } from "../../api/tasks";
 import { topicsApi } from "../../api/topics";
-import TaskDetailsToggle from "./TaskDetails";
+import TaskDetailsPanel from "./TaskDetails";
 import { useAdmin } from "../../hooks/useAdmin";
 import { crumbText, kindLabel } from "../../lib/taskLabels";
 import type { TaskView } from "../../types/topics";
@@ -54,33 +54,49 @@ export default function InProgressList({
                 onDone={onReload}
               />
             ) : (
-              <div
-                key={t.id}
-                className="card"
-                style={{
-                  display: "flex",
-                  gap: "0.6rem",
-                  alignItems: "center",
-                  padding: "0.7rem 0.9rem",
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <Link to={`${detailBase}/${t.topic_id}`}>
-                    <strong>{t.topic_name}</strong>
-                  </Link>{" "}
-                  <span className="pill pill--stone">{kindLabel(t)}</span>
-                  <div className="pageSub">{crumbText(t)}</div>
-                  <TaskDetailsToggle task={t} />
-                </div>
-                <span className="pageSub">
-                  {t.assignee_name ?? t.assignee_email}
-                </span>
-              </div>
+              <TeammateTaskCard key={t.id} task={t} detailBase={detailBase} />
             ),
           )}
         </div>
       )}
     </>
+  );
+}
+
+/** A teammate's in-progress task: click anywhere on the card for details. */
+function TeammateTaskCard({
+  task,
+  detailBase,
+}: {
+  task: TaskView;
+  detailBase: string;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      className="card"
+      onClick={() => setOpen((v) => !v)}
+      style={{
+        display: "flex",
+        gap: "0.6rem",
+        alignItems: "center",
+        padding: "0.7rem 0.9rem",
+        cursor: "pointer",
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <Link
+          to={`${detailBase}/${task.topic_id}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <strong>{task.topic_name}</strong>
+        </Link>{" "}
+        <span className="pill pill--stone">{kindLabel(task)}</span>
+        <div className="pageSub">{crumbText(task)}</div>
+        <TaskDetailsPanel task={task} open={open} />
+      </div>
+      <span className="pageSub">{task.assignee_name ?? task.assignee_email}</span>
+    </div>
   );
 }
 
@@ -96,6 +112,7 @@ function MyTaskCard({
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const isTranslation = task.task_type === "TRANSLATION";
 
   async function handle(file: File) {
@@ -117,9 +134,16 @@ function MyTaskCard({
   }
 
   return (
-    <div className="card card--pad-lg stack" style={{ gap: "0.6rem" }}>
+    <div
+      className="card card--pad-lg stack"
+      onClick={() => setOpen((v) => !v)}
+      style={{ gap: "0.6rem", cursor: "pointer" }}
+    >
       <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
-        <Link to={`${detailBase}/${task.topic_id}`}>
+        <Link
+          to={`${detailBase}/${task.topic_id}`}
+          onClick={(e) => e.stopPropagation()}
+        >
           <strong>{task.topic_name}</strong>
         </Link>
         <span className="pill pill--stone">{kindLabel(task)}</span>
@@ -128,8 +152,11 @@ function MyTaskCard({
       <p className="pageSub" style={{ margin: 0 }}>
         {crumbText(task)}
       </p>
-      <TaskDetailsToggle task={task} />
-      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+      <TaskDetailsPanel task={task} open={open} />
+      <div
+        style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <input
           ref={inputRef}
           type="file"

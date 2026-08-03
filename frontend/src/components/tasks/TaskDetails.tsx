@@ -1,4 +1,4 @@
-import { Fragment, useState, type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { crumbText, kindLabel } from "../../lib/taskLabels";
 import type { TaskStatus, TaskView } from "../../types/topics";
 
@@ -16,10 +16,19 @@ function when(iso: string | null): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toLocaleString();
 }
 
-/** Everything about a task that doesn't fit on its card, behind a toggle. */
-export default function TaskDetailsToggle({ task }: { task: TaskView }) {
-  const [open, setOpen] = useState(false);
-
+/**
+ * Everything about a task that doesn't fit on its card, shown when `open`.
+ * The state lives with — and is toggled by clicking anywhere on — the
+ * containing card/row, not this component; it just renders the indicator
+ * and the panel.
+ */
+export default function TaskDetailsPanel({
+  task,
+  open,
+}: {
+  task: TaskView;
+  open: boolean;
+}) {
   const rows: { label: string; value: ReactNode }[] = [
     { label: "Type", value: kindLabel(task) },
     {
@@ -27,6 +36,12 @@ export default function TaskDetailsToggle({ task }: { task: TaskView }) {
       value: <span className="pill pill--stone">{STATUS_LABEL[task.status]}</span>,
     },
     { label: "Path", value: crumbText(task) },
+    {
+      label: "Notes",
+      value: task.topic_notes ? (
+        <span style={{ whiteSpace: "pre-wrap" }}>{task.topic_notes}</span>
+      ) : null,
+    },
     { label: "Assignee", value: task.assignee_name ?? task.assignee_email },
     {
       label: "Queue position",
@@ -48,15 +63,12 @@ export default function TaskDetailsToggle({ task }: { task: TaskView }) {
 
   return (
     <div style={{ marginTop: "0.4rem" }}>
-      <button
-        type="button"
-        className="btn btn--ghost btn--sm"
-        style={{ minHeight: 0, padding: "0.2rem 0.4rem" }}
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+      <span
+        className="pageSub"
+        style={{ fontSize: "0.78rem", fontWeight: 500 }}
       >
         {open ? "Details ▴" : "Details ▾"}
-      </button>
+      </span>
       {open && (
         <dl
           className="card"

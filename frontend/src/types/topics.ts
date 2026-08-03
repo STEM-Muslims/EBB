@@ -65,6 +65,7 @@ export interface Task {
 /** A task enriched with its topic context (queue / in-progress / etc. lists). */
 export interface TaskView extends Task {
   topic_name: string | null;
+  topic_notes: string | null;
   breadcrumb: Breadcrumb[];
   language: Language | null;
   /** Display name of `assignee_email`, when that user has one on record. */

@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { tasksApi } from "../../api/tasks";
 import { groupBySubject } from "../../lib/queueGroups";
 import { crumbText, kindLabel } from "../../lib/taskLabels";
 import type { Breadcrumb, TaskView } from "../../types/topics";
-import TaskDetailsToggle from "../tasks/TaskDetails";
+import TaskDetailsPanel from "../tasks/TaskDetails";
 
 function title(t: TaskView) {
   return t.topic_name ?? `Topic #${t.topic_id}`;
@@ -56,22 +57,7 @@ export default function QueueManager({
               >
                 <SubjectHeading subject={subject} count={tasks.length} />
                 {tasks.map((t) => (
-                  <div key={t.id} style={rowStyle}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <strong>{title(t)}</strong>{" "}
-                      <span className="pill pill--stone">{kindLabel(t)}</span>
-                      <div className="pageSub">{crumbText(t)}</div>
-                      <TaskDetailsToggle task={t} />
-                    </div>
-                    <button
-                      className="btn btn--ghost btn--sm"
-                      style={{ color: "var(--danger, #ef4444)" }}
-                      onClick={() => handleDelete(t)}
-                      title="Remove from queue"
-                    >
-                      Remove
-                    </button>
-                  </div>
+                  <QueueRow key={t.id} task={t} onDelete={handleDelete} />
                 ))}
               </div>
             ))}
@@ -92,45 +78,102 @@ export default function QueueManager({
                 style={{ gap: "0.4rem" }}
               >
                 <SubjectHeading subject={subject} count={tasks.length} />
-                {tasks.map((t) => {
-                  const by = t.assignee_name ?? t.assignee_email;
-                  return (
-                    <div key={t.id} style={rowStyle}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <strong>{title(t)}</strong>{" "}
-                        <span className="pill pill--stone">{kindLabel(t)}</span>
-                        <div className="pageSub">
-                          {crumbText(t)}
-                          {by && ` · released by ${by}`}
-                        </div>
-                        <TaskDetailsToggle task={t} />
-                      </div>
-                      <div style={{ display: "flex", gap: "0.4rem" }}>
-                        <button
-                          className="btn btn--secondary btn--sm"
-                          onClick={async () => {
-                            await tasksApi.requeue(t.id);
-                            onChanged();
-                          }}
-                        >
-                          Requeue
-                        </button>
-                        <button
-                          className="btn btn--ghost btn--sm"
-                          style={{ color: "var(--danger, #ef4444)" }}
-                          onClick={() => handleDelete(t)}
-                          title="Remove from queue"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                {tasks.map((t) => (
+                  <ReleasedRow
+                    key={t.id}
+                    task={t}
+                    onDelete={handleDelete}
+                    onRequeue={async () => {
+                      await tasksApi.requeue(t.id);
+                      onChanged();
+                    }}
+                  />
+                ))}
               </div>
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** A queued task row: click anywhere on it for details. */
+function QueueRow({
+  task,
+  onDelete,
+}: {
+  task: TaskView;
+  onDelete: (task: TaskView) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      style={{ ...rowStyle, cursor: "pointer" }}
+      onClick={() => setOpen((v) => !v)}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <strong>{title(task)}</strong>{" "}
+        <span className="pill pill--stone">{kindLabel(task)}</span>
+        <div className="pageSub">{crumbText(task)}</div>
+        <TaskDetailsPanel task={task} open={open} />
+      </div>
+      <button
+        className="btn btn--ghost btn--sm"
+        style={{ color: "var(--danger, #ef4444)" }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(task);
+        }}
+        title="Remove from queue"
+      >
+        Remove
+      </button>
+    </div>
+  );
+}
+
+/** A released task row: click anywhere on it for details. */
+function ReleasedRow({
+  task,
+  onDelete,
+  onRequeue,
+}: {
+  task: TaskView;
+  onDelete: (task: TaskView) => void;
+  onRequeue: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const by = task.assignee_name ?? task.assignee_email;
+  return (
+    <div
+      style={{ ...rowStyle, cursor: "pointer" }}
+      onClick={() => setOpen((v) => !v)}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <strong>{title(task)}</strong>{" "}
+        <span className="pill pill--stone">{kindLabel(task)}</span>
+        <div className="pageSub">
+          {crumbText(task)}
+          {by && ` · released by ${by}`}
+        </div>
+        <TaskDetailsPanel task={task} open={open} />
+      </div>
+      <div
+        style={{ display: "flex", gap: "0.4rem" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="btn btn--secondary btn--sm" onClick={onRequeue}>
+          Requeue
+        </button>
+        <button
+          className="btn btn--ghost btn--sm"
+          style={{ color: "var(--danger, #ef4444)" }}
+          onClick={() => onDelete(task)}
+          title="Remove from queue"
+        >
+          Remove
+        </button>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { tasksApi } from "../api/tasks";
 import InProgressList from "../components/tasks/InProgressList";
-import TaskDetailsToggle from "../components/tasks/TaskDetails";
+import TaskDetailsPanel from "../components/tasks/TaskDetails";
 import { useAdmin } from "../hooks/useAdmin";
 import { groupBySubject } from "../lib/queueGroups";
 import { crumbText, kindLabel } from "../lib/taskLabels";
@@ -328,14 +328,26 @@ function Section({
 }
 
 function QueueCard({ task, dimmed }: { task: TaskView; dimmed?: boolean }) {
+  const [open, setOpen] = useState(false);
   return (
     <div
       className="card"
+      role="button"
+      tabIndex={0}
+      aria-expanded={open}
+      onClick={() => setOpen((v) => !v)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setOpen((v) => !v);
+        }
+      }}
       style={{
         display: "flex",
         gap: "0.6rem",
         alignItems: "center",
         padding: "0.7rem 0.9rem",
+        cursor: "pointer",
         ...(dimmed ? { opacity: 0.6, color: "var(--text-muted)" } : {}),
       }}
     >
@@ -347,7 +359,7 @@ function QueueCard({ task, dimmed }: { task: TaskView; dimmed?: boolean }) {
         <p className="pageSub" style={{ margin: 0 }}>
           {crumbText(task)}
         </p>
-        <TaskDetailsToggle task={task} />
+        <TaskDetailsPanel task={task} open={open} />
       </div>
     </div>
   );

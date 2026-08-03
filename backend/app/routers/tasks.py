@@ -75,6 +75,7 @@ def _enrich(
     return {
         **task.model_dump(),
         "topic_name": topic.name if topic else None,
+        "topic_notes": topic.notes if topic else None,
         "breadcrumb": _ancestors(by_id, topic) if topic else [],
         "language": language.model_dump() if language else None,
         "assignee_name": _full_name(users.get(task.assignee_email or "")),
