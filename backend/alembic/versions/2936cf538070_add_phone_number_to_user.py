@@ -22,12 +22,11 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.add_column('user', sa.Column('phone_number', sa.String(), nullable=True))
     # Stale tables left over from a removed DegreeGroup model — no longer
-    # referenced by any code on either branch this was merged from.
-    op.drop_index(op.f('ix_userdegreegroup_degree_group_id'), table_name='userdegreegroup')
-    op.drop_index(op.f('ix_userdegreegroup_user_id'), table_name='userdegreegroup')
-    op.drop_table('userdegreegroup')
-    op.drop_index(op.f('ix_degreegroup_name'), table_name='degreegroup')
-    op.drop_table('degreegroup')
+    # referenced by any code on either branch this was merged from. Guarded
+    # with IF EXISTS since not every database has this drift (dropping the
+    # table also drops its indexes, so no separate DROP INDEX is needed).
+    op.execute("DROP TABLE IF EXISTS userdegreegroup CASCADE")
+    op.execute("DROP TABLE IF EXISTS degreegroup CASCADE")
 
 
 def downgrade() -> None:
