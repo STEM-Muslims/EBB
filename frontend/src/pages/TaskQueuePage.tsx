@@ -211,6 +211,11 @@ export default function TaskQueuePage() {
               <p className="pageSub" style={{ margin: 0 }}>
                 {crumbText(current)}
               </p>
+              {current.topic_notes && (
+                <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>
+                  {current.topic_notes}
+                </p>
+              )}
               <div style={{ display: "flex", gap: "0.5rem" }}>
                 <button className="btn btn--sm" onClick={accept} disabled={busy}>
                   Accept
