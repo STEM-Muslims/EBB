@@ -10,7 +10,7 @@
 /* ── Centered Page Layout ────────────────── */
 .page {
     padding: 32px 36px;
-    max-width: 1120px;
+    max-width: 1440px;
     width: 100%;
     margin: 0 auto; /* Horizontally centers the admin dashboard */
     display: flex;
@@ -390,6 +390,35 @@
 
 .btnDanger:hover {
     border-color: var(--danger);
+}
+
+.actionButtons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.iconBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    background: none;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s, border-color 0.15s;
+}
+
+.iconBtn:hover {
+    background: var(--bg);
+    color: var(--brand);
+    border-color: var(--brand);
 }
 
 /* ── Status ──────────────────────────────── */
