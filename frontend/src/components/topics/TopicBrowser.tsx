@@ -176,6 +176,23 @@ export default function TopicBrowser({
           </nav>
 
           <h1>{current ? current.name : "Curriculum"}</h1>
+          {current?.notes && (
+            <p style={{ whiteSpace: "pre-wrap", margin: "0.3rem 0 0" }}>
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  fontWeight: 600,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  color: "var(--text-muted)",
+                  marginRight: "0.4rem",
+                }}
+              >
+                {LEVEL_LABEL[current.level_type]} notes
+              </span>
+              {current.notes}
+            </p>
+          )}
           <p className="pageSub">
             {current
               ? `${LEVEL_LABEL[current.level_type]} · ${children.length} ${
