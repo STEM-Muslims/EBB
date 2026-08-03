@@ -14,6 +14,7 @@ import ManualAssignmentsPage from "./pages/admin/ManualAssignmentsPage";
 import UserHomePage from "./pages/user/HomePage";
 import UserVideosPage from "./pages/user/VideosPage";
 import UserTopicsPage from "./pages/user/TopicsPage";
+import ProfilePage from "./pages/user/ProfilePage";
 
 const ADMIN_NAV: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: "◆", exact: true },
@@ -78,6 +79,7 @@ function App() {
                   <Route path="/tasks/manage" element={<QueueManagePage />} />
                   <Route path="/tasks/assignments" element={<ManualAssignmentsPage />} />
                   <Route path="/videos" element={<VideoManagerPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
                 </Routes>
               </Layout>
             </RequireAdmin>
@@ -105,6 +107,7 @@ function App() {
                   <Route path="/tasks/queue" element={<TaskQueuePage />} />
                   <Route path="/tasks/in-progress" element={<InProgressPage />} />
                   <Route path="/videos" element={<UserVideosPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
                 </Routes>
               </Layout>
             </RequireUser>

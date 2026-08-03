@@ -44,6 +44,9 @@ class CreateUserRequest(BaseModel):
     email: str
     password: str | None = None
     is_admin: bool = False
+    first_name: str | None = None
+    surname: str | None = None
+    phone_number: str | None = None
     roles: list[RoleType] = []
     teaching_subject_ids: list[int] = []
     language_ids: list[int] = []
@@ -55,6 +58,9 @@ class UserResponse(BaseModel):
     is_admin: bool
     google_id: str | None
     avatar_url: str | None
+    first_name: str | None = None
+    surname: str | None = None
+    phone_number: str | None = None
     roles: list[RoleType]
     teaching_subject_ids: list[int]
     language_ids: list[int]
@@ -63,6 +69,9 @@ class UserResponse(BaseModel):
 class UpdateUserRequest(BaseModel):
     email: str
     is_admin: bool
+    first_name: str | None = None
+    surname: str | None = None
+    phone_number: str | None = None
     roles: list[RoleType] = []
     teaching_subject_ids: list[int] = []
     language_ids: list[int] = []
@@ -99,6 +108,9 @@ def _user_response(user: User, session: Session) -> UserResponse:
         is_admin=bool(user.is_admin),
         google_id=user.google_id,
         avatar_url=user.avatar_url,
+        first_name=user.first_name,
+        surname=user.surname,
+        phone_number=user.phone_number,
         **build_user_profile(user, session),
     )
 
@@ -154,6 +166,30 @@ def _sync_profile(
     for language_id in dict.fromkeys(language_ids):
         session.add(UserLanguage(user_id=user.id, language_id=language_id))
 
+
+class UpdateProfileRequest(BaseModel):
+    first_name: str | None = None
+    surname: str | None = None
+    phone_number: str | None = None
+
+@router.patch("/users/me/profile")
+def update_own_profile(
+    req: UpdateProfileRequest,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    user = session.exec(select(User).where(User.email == current_user.email)).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    user.first_name = req.first_name
+    user.surname = req.surname
+    user.phone_number = req.phone_number
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return _user_response(user, session)
 
 @router.patch("/users/me/password")
 def change_own_password(
@@ -288,6 +324,9 @@ def update_user(
 
     user.email = req.email
     user.is_admin = req.is_admin
+    user.first_name = req.first_name
+    user.surname = req.surname
+    user.phone_number = req.phone_number
     session.add(user)
 
     _sync_profile(
@@ -316,6 +355,9 @@ def create_user(user: CreateUserRequest, session: Session = Depends(get_db)):
         email=user.email,
         hashed_password=_pwd_context.hash(user.password) if user.password else None,
         is_admin=user.is_admin,
+        first_name=user.first_name,
+        surname=user.surname,
+        phone_number=user.phone_number,
     )
     session.add(db_user)
     session.flush()

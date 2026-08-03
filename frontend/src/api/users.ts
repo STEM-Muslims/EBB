@@ -38,6 +38,9 @@ export interface AdminUser {
   is_admin: boolean;
   google_id: string | null;
   avatar_url: string | null;
+  first_name: string | null;
+  surname: string | null;
+  phone_number: string | null;
   roles: RoleType[];
   teaching_subject_ids: number[];
   language_ids: number[];
@@ -47,6 +50,9 @@ export interface UserProfileInput {
   roles: RoleType[];
   teaching_subject_ids: number[];
   language_ids: number[];
+  first_name?: string | null;
+  surname?: string | null;
+  phone_number?: string | null;
 }
 
 export const usersApi = {
@@ -59,6 +65,15 @@ export const usersApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  updateProfile: (data: {
+    first_name: string | null;
+    surname: string | null;
+    phone_number: string | null;
+  }) => request<AdminUser>("/users/me/profile", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  }),
 
   changePassword: (password: string) =>
     request<{ ok: boolean }>("/users/me/password", {
