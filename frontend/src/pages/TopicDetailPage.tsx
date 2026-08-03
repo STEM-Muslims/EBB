@@ -102,6 +102,17 @@ export default function TopicDetailPage() {
         </div>
       )}
 
+      {/* ── Notes ─────────────────────────────── */}
+      {topic.notes && (
+        <div
+          className="card card--pad-lg stack"
+          style={{ gap: "0.5rem", marginBottom: "1rem" }}
+        >
+          <h3 style={{ margin: 0 }}>Notes</h3>
+          <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{topic.notes}</p>
+        </div>
+      )}
+
       {/* ── Video ─────────────────────────────── */}
       <div className="card card--pad-lg stack" style={{ gap: "1rem" }}>
         <h3 style={{ margin: 0 }}>Video</h3>
