@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import AccountMenu from "./AccountMenu";
 import styles from "./Layout.module.css";
@@ -42,14 +42,14 @@ export default function Layout({
   return (
     <div className={styles.shell}>
       <header className={styles.topbar}>
-        <div className={styles.brand}>
+        <Link to={isAdmin ? "/admin" : "/"} className={styles.brand}>
           <img
             className={styles.logoImg}
             src="/logo.png"
             alt="Education Beyond Borders"
           />
           {label && <span className={styles.brandLabel}>{label}</span>}
-        </div>
+        </Link>
 
         <nav className={styles.nav}>
           {navItems.map((item) =>
