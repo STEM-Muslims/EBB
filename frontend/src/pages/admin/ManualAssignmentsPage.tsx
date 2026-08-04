@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { tasksApi } from "../../api/tasks";
+import Breadcrumb from "../../components/Breadcrumb";
 import Modal from "../../components/Modal";
 import { useUserLookups } from "../../hooks/useUserLookups";
 import { crumbText, kindLabel } from "../../lib/taskLabels";
@@ -223,7 +224,12 @@ export default function ManualAssignmentsPage() {
     <div className={styles.pageWrap}>
       <div className="pageHead">
         <div className="pageHeadText">
-          <span className="pageEyebrow">Administration</span>
+          <Breadcrumb
+            items={[
+              { label: "Tasks", to: "/admin/tasks/queue" },
+              { label: "Manual Assignments" },
+            ]}
+          />
           <h1>Manual Assignments</h1>
           <p className="pageSub">
             Directly select, modify, assign, requeue, or force-complete any task in the system.

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { tasksApi } from "../api/tasks";
+import Breadcrumb from "../components/Breadcrumb";
 import QueueManager from "../components/topics/QueueManager";
 import type { TaskView } from "../types/topics";
 
@@ -31,7 +32,12 @@ export default function QueueManagePage() {
     <div className="pageWrap" style={{ maxWidth: 820 }}>
       <div className="pageHead">
         <div className="pageHeadText">
-          <span className="pageEyebrow">Tasks</span>
+          <Breadcrumb
+            items={[
+              { label: "Tasks", to: "/admin/tasks/queue" },
+              { label: "Queue management" },
+            ]}
+          />
           <h1>Queue management</h1>
           <p className="pageSub">
             The to-do queue, split by subject and newest first, plus released

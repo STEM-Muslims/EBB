@@ -1,0 +1,44 @@
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-bottom: 4px;
+}
+
+.crumbGroup {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.crumb {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 2px 5px;
+    border-radius: var(--radius-sm);
+    transition:
+        color 0.1s,
+        background 0.1s;
+}
+
+.crumb:hover {
+    color: var(--text-primary);
+    background: var(--border);
+}
+
+.crumbCurrent {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.crumbCurrent:hover {
+    background: none;
+}
+
+.crumbSep {
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 0 1px;
+}

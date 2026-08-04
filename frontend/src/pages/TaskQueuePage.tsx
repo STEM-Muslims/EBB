@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { tasksApi } from "../api/tasks";
+import Breadcrumb from "../components/Breadcrumb";
 import InProgressList from "../components/tasks/InProgressList";
 import Modal from "../components/Modal";
 import TaskDetailsPanel from "../components/tasks/TaskDetails";
@@ -13,6 +14,11 @@ import styles from "./user/user.module.css";
 const SUB = {
   queue: "Tasks waiting to be picked up.",
   "in-progress": "Tasks being worked on right now.",
+};
+
+const PAGE_TITLE = {
+  queue: "Task queue",
+  "in-progress": "In-progress",
 };
 
 /** The tasks page: the queue you accept work from, plus what's in progress. */
@@ -142,7 +148,13 @@ export default function TaskQueuePage() {
     <div className="pageWrap" style={{ maxWidth: 820 }}>
       <div className="pageHead">
         <div className="pageHeadText">
-          <h1>Tasks</h1>
+          <Breadcrumb
+            items={[
+              { label: "Tasks", to: `${base}/queue` },
+              { label: PAGE_TITLE[view] },
+            ]}
+          />
+          <h1>{PAGE_TITLE[view]}</h1>
           <p className="pageSub">{SUB[view]}</p>
         </div>
         <div className="pageActions">

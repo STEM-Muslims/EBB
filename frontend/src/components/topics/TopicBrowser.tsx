@@ -9,6 +9,7 @@ import type {
   VideoState,
 } from "../../types/topics";
 import { buildBreadcrumb, flattenTree } from "../../utils/topicTree";
+import Breadcrumb from "../Breadcrumb";
 import Modal from "../Modal";
 import TopicEditor from "./TopicEditor";
 import TopicCreateForm from "./TopicCreateForm";
@@ -153,28 +154,15 @@ export default function TopicBrowser({
       <div className="pageHead">
         <div className="pageHeadText">
           {/* Breadcrumb path */}
-          <nav className={styles.breadcrumb}>
-            <Link className={styles.crumb} to={base}>
-              Curriculum
-            </Link>
-            {breadcrumb.map((node, i) => {
-              const isLast = i === breadcrumb.length - 1;
-              return (
-                <span key={node.id} className={styles.crumbGroup}>
-                  <span className={styles.crumbSep}>›</span>
-                  {isLast ? (
-                    <span className={`${styles.crumb} ${styles.crumbCurrent}`}>
-                      {node.name || "Unnamed"}
-                    </span>
-                  ) : (
-                    <Link className={styles.crumb} to={folderHref(node.id)}>
-                      {node.name || "Unnamed"}
-                    </Link>
-                  )}
-                </span>
-              );
-            })}
-          </nav>
+          <Breadcrumb
+            items={[
+              { label: "Curriculum", to: base },
+              ...breadcrumb.map((node) => ({
+                label: node.name || "Unnamed",
+                to: folderHref(node.id),
+              })),
+            ]}
+          />
 
           <h1>{current ? current.name : "Curriculum"}</h1>
           {current?.notes && (
