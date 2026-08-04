@@ -358,6 +358,7 @@ function FolderCard({ topic, to }: { topic: Topic; to: string }) {
         </span>
       </div>
       <h3 className={styles.cardTitle}>{topic.name || "Unnamed"}</h3>
+      {topic.notes && <p className={styles.cardNotes}>{topic.notes}</p>}
       <p className={styles.cardMeta}>
         {count} {count === 1 ? "item" : "items"}
       </p>
@@ -389,6 +390,7 @@ function TopicCard({
         </span>
       </div>
       <h3 className={styles.cardTitle}>{topic.name || "Unnamed"}</h3>
+      {topic.notes && <p className={styles.cardNotes}>{topic.notes}</p>}
       <div className={styles.tagRow}>
         <span className={styles.tagLabel}>Translated to:</span>
         {translations && translations.length > 0 ? (
