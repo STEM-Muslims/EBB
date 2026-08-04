@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { tasksApi } from "../api/tasks";
 import InProgressList from "../components/tasks/InProgressList";
+import Modal from "../components/Modal";
 import TaskDetailsPanel from "../components/tasks/TaskDetails";
 import { useAdmin } from "../hooks/useAdmin";
 import { groupBySubject } from "../lib/queueGroups";
@@ -31,6 +32,7 @@ export default function TaskQueuePage() {
 
   const [offer, setOffer] = useState<TaskView[] | null>(null);
   const [offerIdx, setOfferIdx] = useState(0);
+  const [offerModalOpen, setOfferModalOpen] = useState(false);
   const [offerMsg, setOfferMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -79,12 +81,14 @@ export default function TaskQueuePage() {
 
   async function getNewTask() {
     setOfferMsg(null);
+    setOfferModalOpen(true);
     setBusy(true);
     try {
       const queue = await tasksApi.getQueue();
       if (queue.length === 0) {
         setOffer(null);
         setOfferMsg("Nothing available right now.");
+        setOfferModalOpen(false);
       } else {
         setOffer(queue);
         setOfferIdx(0);
@@ -101,6 +105,7 @@ export default function TaskQueuePage() {
       await tasksApi.claim(current.id);
       setOffer(null);
       setOfferIdx(0);
+      setOfferModalOpen(false);
       setOfferMsg("Task accepted — see it under In progress.");
       await refreshActive();
       await loadQueue();
@@ -120,9 +125,17 @@ export default function TaskQueuePage() {
       setOffer(null);
       setOfferIdx(0);
       setOfferMsg("Nothing else you can do right now.");
+      setOfferModalOpen(false);
     } else {
       setOfferIdx(next);
     }
+  }
+
+  function closeOfferModal() {
+    setOfferModalOpen(false);
+    setOffer(null);
+    setOfferIdx(0);
+    setOfferMsg(null);
   }
 
   return (
@@ -168,40 +181,10 @@ export default function TaskQueuePage() {
         </div>
       </div>
 
-      {view === "in-progress" ? (
-        <InProgressList
-          tasks={mine}
-          state={inProgressState}
-          onlyMine={onlyMine}
-          onReload={loadInProgress}
-        />
-      ) : (
-        <div className="stack" style={{ gap: "1.25rem" }}>
-          {status === "loading" && (
-            <div className="loadingState">
-              <div className="spinner"></div>
-              <span>Loading…</span>
-            </div>
-          )}
-          {status === "error" && (
-            <p className="emptyState" style={{ margin: 0 }}>
-              Couldn’t load tasks.
-            </p>
-          )}
-
-          {status === "ready" && hasActive && !current && (
-            <p className="emptyState" style={{ margin: 0 }}>
-              You’re already on a task. Finish or release it in{" "}
-              <Link to={`${base}/in-progress`}>In progress</Link> first.
-            </p>
-          )}
-
-          {current && (
-            <div
-              className="card card--pad-lg stack"
-              style={{ gap: "0.75rem", borderColor: "var(--brand)" }}
-            >
-              <span className="pageEyebrow">Offered to you</span>
+      {offerModalOpen && (
+        <Modal title="Get new task" onClose={closeOfferModal}>
+          {current ? (
+            <div className="stack" style={{ gap: "0.75rem" }}>
               <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
                 <h2 style={{ margin: 0, fontSize: "1rem" }}>
                   {current.topic_name}
@@ -229,6 +212,41 @@ export default function TaskQueuePage() {
                 </button>
               </div>
             </div>
+          ) : (
+            <div className="loadingState">
+              <div className="spinner"></div>
+              <span>Finding a task…</span>
+            </div>
+          )}
+        </Modal>
+      )}
+
+      {view === "in-progress" ? (
+        <InProgressList
+          tasks={mine}
+          state={inProgressState}
+          onlyMine={onlyMine}
+          onReload={loadInProgress}
+        />
+      ) : (
+        <div className="stack" style={{ gap: "1.25rem" }}>
+          {status === "loading" && (
+            <div className="loadingState">
+              <div className="spinner"></div>
+              <span>Loading…</span>
+            </div>
+          )}
+          {status === "error" && (
+            <p className="emptyState" style={{ margin: 0 }}>
+              Couldn’t load tasks.
+            </p>
+          )}
+
+          {status === "ready" && hasActive && !current && (
+            <p className="emptyState" style={{ margin: 0 }}>
+              You’re already on a task. Finish or release it in{" "}
+              <Link to={`${base}/in-progress`}>In progress</Link> first.
+            </p>
           )}
 
           {!current && offerMsg && (

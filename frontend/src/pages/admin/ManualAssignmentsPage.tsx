@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { tasksApi } from "../../api/tasks";
+import Modal from "../../components/Modal";
 import { useUserLookups } from "../../hooks/useUserLookups";
 import { crumbText, kindLabel } from "../../lib/taskLabels";
 import { displayName, fullName, initials } from "../../lib/userName";
@@ -507,126 +508,117 @@ export default function ManualAssignmentsPage() {
 
       {/* Edit Modal */}
       {selectedTask && (
-        <div className={styles.modalBackdrop}>
-          <div className={styles.modalContent}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Manual Task Manager</h3>
-              <button className={styles.btnClose} onClick={() => setSelectedTask(null)}>
-                ✕
-              </button>
+        <Modal title="Manual Task Manager" onClose={() => setSelectedTask(null)}>
+        <div className="stack" style={{ gap: "1.25rem" }}>
+          {saveError && <div className={styles.errorBanner}>{saveError}</div>}
+
+          {/* Task Details Info Card */}
+          <div className={styles.taskSummaryCard}>
+            <span className={styles.filterLabel}>{crumbText(selectedTask)}</span>
+            <strong style={{ fontSize: "1rem" }}>{selectedTask.topic_name}</strong>
+            <div style={{ marginTop: "0.25rem" }}>
+              <span className="pill pill--stone" style={{ marginRight: "0.5rem" }}>
+                {kindLabel(selectedTask)}
+              </span>
+              <span className={getStatusClassName(selectedTask.status)}>
+                Current: {selectedTask.status}
+              </span>
             </div>
+          </div>
 
-            <div className={styles.modalBody}>
-              {saveError && <div className={styles.errorBanner}>{saveError}</div>}
+          {/* Status Select */}
+          <div className={styles.formField}>
+            <label className={styles.formLabel}>Target Status</label>
+            <select
+              className={styles.formSelect}
+              value={editStatus}
+              onChange={(e) => {
+                const status = e.target.value;
+                setEditStatus(status);
+                // Clear assignee if moving to unassigned state
+                if (status === "QUEUED" || status === "CANCELLED" || status === "RELEASED") {
+                  setEditAssignee("");
+                }
+              }}
+            >
+              <option value="QUEUED">QUEUED (Unclaimed)</option>
+              <option value="IN_PROGRESS">IN_PROGRESS (Active)</option>
+              <option value="RELEASED">RELEASED (Awaiting requeue)</option>
+              <option value="COMPLETED">COMPLETED (Force-complete)</option>
+              <option value="CANCELLED">CANCELLED (Archived)</option>
+            </select>
+          </div>
 
-              {/* Task Details Info Card */}
-              <div className={styles.taskSummaryCard}>
-                <span className={styles.filterLabel}>{crumbText(selectedTask)}</span>
-                <strong style={{ fontSize: "1rem" }}>{selectedTask.topic_name}</strong>
-                <div style={{ marginTop: "0.25rem" }}>
-                  <span className="pill pill--stone" style={{ marginRight: "0.5rem" }}>
-                    {kindLabel(selectedTask)}
-                  </span>
-                  <span className={getStatusClassName(selectedTask.status)}>
-                    Current: {selectedTask.status}
-                  </span>
+          {/* Assignee Select - Show for all except CANCELLED so they can assign queued tasks easily */}
+          {editStatus !== "CANCELLED" && (
+            <div className={styles.formField}>
+              <label className={styles.formLabel}>
+                Eligible Assignee (filtered by role & subject/language)
+              </label>
+              {loadingEligible ? (
+                <div className="pageSub">Fetching eligible users...</div>
+              ) : eligibleUsers.length === 0 ? (
+                <div style={{ color: "var(--danger)", fontSize: "0.85rem" }}>
+                  No eligible users found! Make sure users are registered with the appropriate
+                  roles (TEACHER for recordings, TRANSLATOR for translations) and have subject
+                  specialties matching this task's subject or language.
                 </div>
-              </div>
-
-              {/* Status Select */}
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>Target Status</label>
+              ) : (
                 <select
                   className={styles.formSelect}
-                  value={editStatus}
+                  value={editAssignee}
                   onChange={(e) => {
-                    const status = e.target.value;
-                    setEditStatus(status);
-                    // Clear assignee if moving to unassigned state
-                    if (status === "QUEUED" || status === "CANCELLED" || status === "RELEASED") {
-                      setEditAssignee("");
+                    const newAssignee = e.target.value;
+                    setEditAssignee(newAssignee);
+                    // Auto-switch to IN_PROGRESS if they assign a user while it's currently unassigned
+                    if (newAssignee && (editStatus === "QUEUED" || editStatus === "RELEASED")) {
+                      setEditStatus("IN_PROGRESS");
                     }
                   }}
                 >
-                  <option value="QUEUED">QUEUED (Unclaimed)</option>
-                  <option value="IN_PROGRESS">IN_PROGRESS (Active)</option>
-                  <option value="RELEASED">RELEASED (Awaiting requeue)</option>
-                  <option value="COMPLETED">COMPLETED (Force-complete)</option>
-                  <option value="CANCELLED">CANCELLED (Archived)</option>
+                  <option value="">-- Select Eligible User (Unassigned) --</option>
+                  {/* If existing assignee is not in the eligible list (rare), render them so we don't lose them */}
+                  {selectedTask.assignee_email &&
+                    !eligibleUsers.some((u) => u.email === selectedTask.assignee_email) && (
+                      <option value={selectedTask.assignee_email}>
+                        {selectedTask.assignee_email} (Current Assignee)
+                      </option>
+                    )}
+                  {eligibleUsers.map((u) => {
+                    const name = fullName(u);
+                    return (
+                      <option key={u.id} value={u.email}>
+                        {name ? `${name} — ${u.email}` : u.email}
+                      </option>
+                    );
+                  })}
                 </select>
-              </div>
-
-              {/* Assignee Select - Show for all except CANCELLED so they can assign queued tasks easily */}
-              {editStatus !== "CANCELLED" && (
-                <div className={styles.formField}>
-                  <label className={styles.formLabel}>
-                    Eligible Assignee (filtered by role & subject/language)
-                  </label>
-                  {loadingEligible ? (
-                    <div className="pageSub">Fetching eligible users...</div>
-                  ) : eligibleUsers.length === 0 ? (
-                    <div style={{ color: "var(--danger)", fontSize: "0.85rem" }}>
-                      No eligible users found! Make sure users are registered with the appropriate
-                      roles (TEACHER for recordings, TRANSLATOR for translations) and have subject
-                      specialties matching this task's subject or language.
-                    </div>
-                  ) : (
-                    <select
-                      className={styles.formSelect}
-                      value={editAssignee}
-                      onChange={(e) => {
-                        const newAssignee = e.target.value;
-                        setEditAssignee(newAssignee);
-                        // Auto-switch to IN_PROGRESS if they assign a user while it's currently unassigned
-                        if (newAssignee && (editStatus === "QUEUED" || editStatus === "RELEASED")) {
-                          setEditStatus("IN_PROGRESS");
-                        }
-                      }}
-                    >
-                      <option value="">-- Select Eligible User (Unassigned) --</option>
-                      {/* If existing assignee is not in the eligible list (rare), render them so we don't lose them */}
-                      {selectedTask.assignee_email &&
-                        !eligibleUsers.some((u) => u.email === selectedTask.assignee_email) && (
-                          <option value={selectedTask.assignee_email}>
-                            {selectedTask.assignee_email} (Current Assignee)
-                          </option>
-                        )}
-                      {eligibleUsers.map((u) => {
-                        const name = fullName(u);
-                        return (
-                          <option key={u.id} value={u.email}>
-                            {name ? `${name} — ${u.email}` : u.email}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  )}
-                </div>
               )}
             </div>
+          )}
 
-            <div className={styles.modalFooter}>
-              <button
-                className="btn btn--secondary"
-                onClick={() => setSelectedTask(null)}
-                disabled={saving}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn"
-                onClick={handleSave}
-                disabled={
-                  saving ||
-                  loadingEligible ||
-                  ((editStatus === "IN_PROGRESS" || editStatus === "COMPLETED") && !editAssignee)
-                }
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
+          <div className={styles.modalFooter}>
+            <button
+              className="btn btn--secondary"
+              onClick={() => setSelectedTask(null)}
+              disabled={saving}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn"
+              onClick={handleSave}
+              disabled={
+                saving ||
+                loadingEligible ||
+                ((editStatus === "IN_PROGRESS" || editStatus === "COMPLETED") && !editAssignee)
+              }
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
           </div>
         </div>
+        </Modal>
       )}
     </div>
   );

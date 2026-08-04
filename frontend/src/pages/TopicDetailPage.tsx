@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { topicsApi } from "../api/topics";
 import { tasksApi } from "../api/tasks";
 import { useAdmin } from "../hooks/useAdmin";
+import Modal from "../components/Modal";
 import PostTaskForm from "../components/topics/PostTaskForm";
 import TopicEditor from "../components/topics/TopicEditor";
 import type { TopicDetail, TopicDetailTask } from "../types/topics";
@@ -78,9 +79,9 @@ export default function TopicDetailPage() {
           {isAdmin && (
             <button
               className="btn btn--secondary btn--sm"
-              onClick={() => setEditing((v) => !v)}
+              onClick={() => setEditing(true)}
             >
-              {editing ? "Close" : "Edit"}
+              Edit
             </button>
           )}
           <Link to={backTo} className="btn btn--secondary btn--sm">
@@ -90,7 +91,7 @@ export default function TopicDetailPage() {
       </div>
 
       {isAdmin && editing && (
-        <div className="card card--pad-lg" style={{ marginBottom: "1rem" }}>
+        <Modal title="Edit topic" onClose={() => setEditing(false)}>
           <TopicEditor
             topic={topic}
             onUpdated={() => {
@@ -99,7 +100,7 @@ export default function TopicDetailPage() {
             }}
             onArchived={() => navigate(backTo)}
           />
-        </div>
+        </Modal>
       )}
 
       {/* ── Notes ─────────────────────────────── */}

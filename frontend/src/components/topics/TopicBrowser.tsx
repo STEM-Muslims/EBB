@@ -9,6 +9,7 @@ import type {
   VideoState,
 } from "../../types/topics";
 import { buildBreadcrumb, flattenTree } from "../../utils/topicTree";
+import Modal from "../Modal";
 import TopicEditor from "./TopicEditor";
 import TopicCreateForm from "./TopicCreateForm";
 import styles from "./TopicBrowser.module.css";
@@ -208,7 +209,7 @@ export default function TopicBrowser({
               <button
                 className="btn btn--sm"
                 onClick={() => {
-                  setShowAdd((v) => !v);
+                  setShowAdd(true);
                   setShowEdit(false);
                   setShowArchived(false);
                 }}
@@ -220,7 +221,7 @@ export default function TopicBrowser({
               <button
                 className="btn btn--secondary btn--sm"
                 onClick={() => {
-                  setShowEdit((v) => !v);
+                  setShowEdit(true);
                   setShowAdd(false);
                   setShowArchived(false);
                 }}
@@ -237,7 +238,10 @@ export default function TopicBrowser({
 
       {/* Admin panels */}
       {admin && showAdd && (
-        <div className="card card--pad-lg" style={{ marginBottom: "1rem" }}>
+        <Modal
+          title={`Add ${LEVEL_LABEL[childLevel ?? "SUBJECT"].toLowerCase()}`}
+          onClose={() => setShowAdd(false)}
+        >
           {current ? (
             <TopicCreateForm
               parent={current}
@@ -254,11 +258,14 @@ export default function TopicBrowser({
               }}
             />
           )}
-        </div>
+        </Modal>
       )}
 
       {admin && showEdit && current && (
-        <div className="card card--pad-lg" style={{ marginBottom: "1rem" }}>
+        <Modal
+          title={`Edit ${LEVEL_LABEL[current.level_type].toLowerCase()}`}
+          onClose={() => setShowEdit(false)}
+        >
           <TopicEditor
             topic={current}
             onUpdated={() => {
@@ -267,7 +274,7 @@ export default function TopicBrowser({
             }}
             onArchived={onArchivedCurrent}
           />
-        </div>
+        </Modal>
       )}
 
       {admin && showArchived && (

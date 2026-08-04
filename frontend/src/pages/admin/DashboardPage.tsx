@@ -4,6 +4,7 @@ import { usersApi, type AdminUser, type RoleType } from "../../api/users";
 import { useUserLookups } from "../../hooks/useUserLookups";
 import { UserAttributesList } from "../../components/UserAttributesList";
 import { UserFilters } from "../../components/UserFilters";
+import Modal from "../../components/Modal";
 import { topicsApi } from "../../api/topics";
 import { languagesApi, type Language } from "../../api/languages";
 import { displayName, fullName, initials } from "../../lib/userName";
@@ -14,43 +15,6 @@ const ROLE_OPTIONS: { value: RoleType; label: string }[] = [
   { value: "TEACHER", label: "Teacher" },
   { value: "TRANSLATOR", label: "Translator" },
 ];
-
-/* ── Reusable Modal Wrapper ──────────────── */
-function Modal({
-  title,
-  children,
-  onClose,
-}: {
-  title: string;
-  children: React.ReactNode;
-  onClose: () => void;
-}) {
-  // Close on Escape key
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  return (
-    <div className={styles.modalBackdrop} onClick={onClose}>
-      <div
-        className={styles.modalContent}
-        onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
-      >
-        <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>{title}</h3>
-          <button className={styles.btnClose} onClick={onClose} aria-label="Close">
-            ✕
-          </button>
-        </div>
-        <div className={styles.modalBody}>{children}</div>
-      </div>
-    </div>
-  );
-}
 
 function RoleCheckboxes({
   selected,
