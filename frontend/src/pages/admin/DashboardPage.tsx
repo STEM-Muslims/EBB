@@ -347,28 +347,41 @@ function AccountSection({
   onLogout: () => void;
 }) {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<"idle" | "ok" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const identity = { email, first_name: firstName, last_name: lastName };
   const name = fullName(identity);
 
   async function changePassword() {
+    if (!currentPassword) {
+      setErrorMessage("Enter your current password.");
+      setStatus("error");
+      return;
+    }
     if (!password || password !== confirm) {
+      setErrorMessage("Passwords do not match.");
       setStatus("error");
       return;
     }
     setSaving(true);
     setStatus("idle");
     try {
-      await usersApi.changePassword(password);
+      await usersApi.changePassword({
+        current_password: currentPassword,
+        new_password: password,
+      });
       setStatus("ok");
+      setCurrentPassword("");
       setPassword("");
       setConfirm("");
       setShowPasswordForm(false);
-    } catch {
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Failed to update. Try again.");
       setStatus("error");
     } finally {
       setSaving(false);
@@ -404,6 +417,15 @@ function AccountSection({
         </div>
       ) : (
         <div className={styles.passwordForm}>
+          <div className={styles.field}>
+            <label className={styles.label}>Current password</label>
+            <input
+              className={styles.input}
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+          </div>
           <div className={styles.fieldRow}>
             <div className={styles.field}>
               <label className={styles.label}>New password</label>
@@ -427,11 +449,7 @@ function AccountSection({
             </div>
           </div>
           {status === "error" && (
-            <p className={styles.error}>
-              {password !== confirm
-                ? "Passwords do not match."
-                : "Failed to update. Try again."}
-            </p>
+            <p className={styles.error}>{errorMessage}</p>
           )}
           {status === "ok" && (
             <p className={styles.success}>Password updated.</p>
@@ -448,6 +466,7 @@ function AccountSection({
               className={styles.btnGhost}
               onClick={() => {
                 setShowPasswordForm(false);
+                setCurrentPassword("");
                 setPassword("");
                 setConfirm("");
                 setStatus("idle");

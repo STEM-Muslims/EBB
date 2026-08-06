@@ -1,4 +1,3 @@
-import time
 from urllib.parse import urlencode
 
 import httpx
@@ -7,17 +6,14 @@ from app.config import (
     FRONTEND_URL,
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
-    JWT_ALGORITHM,
-    JWT_EXPIRY_SECONDS,
-    JWT_SECRET,
 )
+from app.core.security import create_access_token
 from app.db import engine
 from app.dependencies import get_current_user, get_db
 from app.models.user import User
 from app.routers.users import build_user_profile
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
-from jose import jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from sqlmodel import Session, select
@@ -33,14 +29,6 @@ _GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 class LoginRequest(BaseModel):
     email: str
     password: str
-
-
-def _create_token(email: str) -> str:
-    return jwt.encode(
-        {"sub": email, "exp": int(time.time()) + JWT_EXPIRY_SECONDS},
-        JWT_SECRET,
-        algorithm=JWT_ALGORITHM,
-    )
 
 
 @router.get("/google")
@@ -107,7 +95,7 @@ async def google_callback(code: str = None, error: str = None):
             session.commit()
 
     return RedirectResponse(
-        f"{FRONTEND_URL}/admin/callback?token={_create_token(email)}"
+        f"{FRONTEND_URL}/admin/callback?token={create_access_token(email)}"
     )
 
 
@@ -122,6 +110,8 @@ def get_me(
         "first_name": current_user.first_name,
         "last_name": current_user.last_name,
         "is_admin": bool(current_user.is_admin),
+        "google_id": current_user.google_id,
+        "has_password": bool(current_user.hashed_password),
         "avatar_url": current_user.avatar_url,
         "phone_number": current_user.phone_number,
         **profile,
@@ -145,6 +135,6 @@ def password_login(req: LoginRequest, session: Session = Depends(get_db)):
     ):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    token = _create_token(user.email)
+    token = create_access_token(user.email)
 
     return {"access_token": token, "token_type": "bearer"}

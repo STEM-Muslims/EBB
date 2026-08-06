@@ -10,6 +10,8 @@ interface MeResponse {
   first_name: string | null;
   last_name: string | null;
   is_admin: boolean;
+  google_id: string | null;
+  has_password: boolean;
   avatar_url: string | null;
   phone_number: string | null;
   roles: RoleType[];
@@ -31,6 +33,8 @@ export function useAdmin() {
   const [languageIds, setLanguageIds] = useState<number[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
+  const [googleId, setGoogleId] = useState<string | null>(null);
+  const [hasPassword, setHasPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -55,6 +59,8 @@ export function useAdmin() {
         setLanguageIds(data.language_ids ?? []);
         setAvatarUrl(data.avatar_url ?? null);
         setPhoneNumber(data.phone_number ?? null);
+        setGoogleId(data.google_id ?? null);
+        setHasPassword(Boolean(data.has_password));
       })
       .catch(() => {
         localStorage.removeItem(TOKEN_KEY);
@@ -78,6 +84,8 @@ export function useAdmin() {
     languageIds,
     avatarUrl,
     phoneNumber,
+    googleId,
+    hasPassword,
     loading,
     logout,
   };

@@ -39,6 +39,7 @@ export interface AdminUser {
   last_name: string | null;
   is_admin: boolean;
   google_id: string | null;
+  has_password: boolean;
   avatar_url: string | null;
   phone_number: string | null;
   roles: RoleType[];
@@ -75,11 +76,20 @@ export const usersApi = {
     body: JSON.stringify(data),
   }),
 
-  changePassword: (password: string) =>
+  changePassword: (data: { current_password?: string; new_password: string }) =>
     request<{ ok: boolean }>("/users/me/password", {
       method: "PATCH",
-      body: JSON.stringify({ password }),
+      body: JSON.stringify(data),
     }),
+
+  changeEmail: (data: { current_password: string; new_email: string }) =>
+    request<{ email: string; access_token: string; token_type: string }>(
+      "/users/me/email",
+      {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      },
+    ),
 
   update: (
     id: number,

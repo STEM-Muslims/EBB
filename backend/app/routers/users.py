@@ -1,7 +1,9 @@
+import re
 import uuid
 from urllib.parse import urlparse
 
 from app.core.config import AWS_REGION, S3_BUCKET_NAME, s3_client
+from app.core.security import create_access_token
 from app.dependencies import get_current_user, get_db, require_admin
 from app.models.language import Language
 from app.models.role import RoleType, UserRole
@@ -16,6 +18,7 @@ from sqlmodel import Session, select
 
 router = APIRouter()
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 # Avatar uploads: small, already downscaled client-side. Keep a generous cap as a
 # safety net and only accept a short list of web-friendly image types.
@@ -59,6 +62,7 @@ class UserResponse(BaseModel):
     last_name: str | None
     is_admin: bool
     google_id: str | None
+    has_password: bool
     avatar_url: str | None
     phone_number: str | None = None
     roles: list[RoleType]
@@ -79,6 +83,16 @@ class UpdateUserRequest(BaseModel):
 
 class UpdatePasswordRequest(BaseModel):
     password: str
+
+
+class ChangeOwnPasswordRequest(BaseModel):
+    current_password: str | None = None
+    new_password: str
+
+
+class ChangeEmailRequest(BaseModel):
+    current_password: str
+    new_email: str
 
 
 def build_user_profile(user: User, session: Session) -> dict:
@@ -109,6 +123,7 @@ def _user_response(user: User, session: Session) -> UserResponse:
         last_name=user.last_name,
         is_admin=bool(user.is_admin),
         google_id=user.google_id,
+        has_password=bool(user.hashed_password),
         avatar_url=user.avatar_url,
         phone_number=user.phone_number,
         **build_user_profile(user, session),
@@ -193,21 +208,68 @@ def update_own_profile(
 
 @router.patch("/users/me/password")
 def change_own_password(
-    req: UpdatePasswordRequest,
-    email: str = Depends(require_admin),
+    req: ChangeOwnPasswordRequest,
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
-    user = session.exec(select(User).where(User.email == email)).first()
+    user = session.exec(select(User).where(User.email == current_user.email)).first()
 
     if not user:
         raise HTTPException(404, "User not found")
 
-    user.hashed_password = _pwd_context.hash(req.password)
+    if user.hashed_password:
+        if not req.current_password or not _pwd_context.verify(
+            req.current_password, user.hashed_password
+        ):
+            raise HTTPException(401, "Current password is incorrect")
+
+    if len(req.new_password) < 8:
+        raise HTTPException(400, "Password must be at least 8 characters")
+
+    user.hashed_password = _pwd_context.hash(req.new_password)
 
     session.add(user)
     session.commit()
 
     return {"ok": True}
+
+
+@router.patch("/users/me/email")
+def change_own_email(
+    req: ChangeEmailRequest,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    user = session.exec(select(User).where(User.email == current_user.email)).first()
+
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    if user.google_id:
+        raise HTTPException(400, "Your email is managed by your Google account")
+
+    if not user.hashed_password or not _pwd_context.verify(
+        req.current_password, user.hashed_password
+    ):
+        raise HTTPException(401, "Current password is incorrect")
+
+    new_email = req.new_email.strip().lower()
+    if not _EMAIL_RE.match(new_email):
+        raise HTTPException(400, "Enter a valid email address")
+
+    existing = session.exec(
+        select(User).where(User.email == new_email, User.id != user.id)
+    ).first()
+    if existing:
+        raise HTTPException(400, "Email already registered")
+
+    user.email = new_email
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    token = create_access_token(user.email)
+    return {"email": user.email, "access_token": token, "token_type": "bearer"}
 
 
 @router.post("/users/me/avatar")
