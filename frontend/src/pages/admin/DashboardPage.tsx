@@ -3,7 +3,7 @@ import { useAdmin } from "../../hooks/useAdmin";
 import { usersApi, type AdminUser, type RoleType } from "../../api/users";
 import { useUserLookups } from "../../hooks/useUserLookups";
 import { UserAttributesList } from "../../components/UserAttributesList";
-import { UserFilters } from "../../components/UserFilters";
+import { UserFilters, type AccessFilter } from "../../components/UserFilters";
 import Modal from "../../components/Modal";
 import { topicsApi } from "../../api/topics";
 import { languagesApi, type Language } from "../../api/languages";
@@ -493,6 +493,7 @@ function UsersSection() {
   const [selectedSubjects, setSelectedSubjects] = useState<number[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [accessFilter, setAccessFilter] = useState<AccessFilter>("all");
 
   const { subjectsMap, languagesMap, isLoading: lookupsLoading } = useUserLookups();
 
@@ -520,8 +521,17 @@ function UsersSection() {
       .catch(() => console.error("Failed to load languages"));
   }, []);
 
-  // Returns true if the user matches ALL selected subjects (if any) and ALL selected languages (if any)
+  function clearFilters() {
+    setSelectedSubjects([]);
+    setSelectedLanguages([]);
+    setAccessFilter("all");
+  }
+
+  // Returns true if the user matches the access filter, ALL selected subjects (if any) and ALL selected languages (if any)
   const filteredUsers = users.filter((u) => {
+    const matchesAccess =
+      accessFilter === "all" || (accessFilter === "admin") === Boolean(u.is_admin);
+
     const matchesSubjects =
       selectedSubjects.length === 0 ||
       selectedSubjects.every((id) => (u.teaching_subject_ids || []).includes(id));
@@ -536,7 +546,7 @@ function UsersSection() {
       u.email.toLowerCase().includes(query) ||
       (fullName(u)?.toLowerCase().includes(query) ?? false);
 
-    return matchesSubjects && matchesLanguages && matchesSearch;
+    return matchesAccess && matchesSubjects && matchesLanguages && matchesSearch;
   });
 
   return (
@@ -568,12 +578,11 @@ function UsersSection() {
           languages={languages}
           selectedSubjects={selectedSubjects}
           selectedLanguages={selectedLanguages}
+          access={accessFilter}
           onSubjectsChange={setSelectedSubjects}
           onLanguagesChange={setSelectedLanguages}
-          onClear={() => {
-            setSelectedSubjects([]);
-            setSelectedLanguages([]);
-          }}
+          onAccessChange={setAccessFilter}
+          onClear={clearFilters}
         />
       )}
 
@@ -585,12 +594,14 @@ function UsersSection() {
       ) : filteredUsers.length === 0 ? (
         <div className={styles.emptyState}>
           <p>No users match your search or filters.</p>
-          {(selectedSubjects.length > 0 || selectedLanguages.length > 0 || searchQuery.trim() !== "") && (
+          {(selectedSubjects.length > 0 ||
+            selectedLanguages.length > 0 ||
+            accessFilter !== "all" ||
+            searchQuery.trim() !== "") && (
             <button
               className={styles.btnGhost}
               onClick={() => {
-                setSelectedSubjects([]);
-                setSelectedLanguages([]);
+                clearFilters();
                 setSearchQuery("");
               }}
             >

@@ -3,13 +3,22 @@ import type { Topic } from "../types/topics";
 import type { Language } from "../api/languages";
 import styles from "./UserFilters.module.css";
 
+export type AccessFilter = "all" | "admin" | "non-admin";
+
+const ACCESS_LABELS: Record<Exclude<AccessFilter, "all">, string> = {
+  admin: "Admins only",
+  "non-admin": "Non-admins only",
+};
+
 interface UserFiltersProps {
   subjects: Topic[];
   languages: Language[];
   selectedSubjects: number[];
   selectedLanguages: number[];
+  access: AccessFilter;
   onSubjectsChange: (ids: number[]) => void;
   onLanguagesChange: (ids: number[]) => void;
+  onAccessChange: (access: AccessFilter) => void;
   onClear: () => void;
 }
 
@@ -18,11 +27,14 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
   languages,
   selectedSubjects,
   selectedLanguages,
+  access,
   onSubjectsChange,
   onLanguagesChange,
+  onAccessChange,
   onClear,
 }) => {
-  const hasFilters = selectedSubjects.length > 0 || selectedLanguages.length > 0;
+  const hasFilters =
+    selectedSubjects.length > 0 || selectedLanguages.length > 0 || access !== "all";
 
   function handleSelectChange(
     e: React.ChangeEvent<HTMLSelectElement>,
@@ -47,6 +59,18 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
     <div className={styles.filterContainer}>
       <div className={styles.controlsRow}>
         <span className={styles.filterLabel}>Filter users:</span>
+
+        {/* Admin access Dropdown */}
+        <select
+          aria-label="Filter by admin access"
+          className={styles.selectInput}
+          value={access}
+          onChange={(e) => onAccessChange(e.target.value as AccessFilter)}
+        >
+          <option value="all">All users</option>
+          <option value="admin">{ACCESS_LABELS.admin}</option>
+          <option value="non-admin">{ACCESS_LABELS["non-admin"]}</option>
+        </select>
 
         {/* Subject Dropdown */}
         <select
@@ -98,6 +122,16 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
       {hasFilters && (
         <div className={styles.activeFiltersRow}>
           <span className={styles.activeLabel}>Active:</span>
+
+          {access !== "all" && (
+            <span
+              className={`pill ${styles.filterPill}`}
+              onClick={() => onAccessChange("all")}
+              title="Click to remove filter"
+            >
+              {ACCESS_LABELS[access]} ✕
+            </span>
+          )}
 
           {selectedSubjects.map((id) => {
             const subject = subjects.find((s) => s.id === id);
