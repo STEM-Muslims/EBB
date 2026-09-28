@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Privacy Policy · Education Beyond Borders</title>
+    <style>
+      :root {
+        --brand: #14543b;
+        --brand-darker: #0e3f2c;
+        --canvas: #f4f8f6;
+        --surface: #ffffff;
+        --text: #1f2421;
+        --text-h: #15201b;
+        --text-muted: #7c857f;
+        --border: #e1ebe6;
+        --link: #0e4d6b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--canvas);
+        color: var(--text);
+        font: 16px/1.65 "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+          sans-serif;
+      }
+      header {
+        background: var(--brand-darker);
+        color: #fff;
+        padding: 1rem 1.25rem;
+      }
+      header a {
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+      header img {
+        height: 36px;
+        width: auto;
+        background: #fff;
+        border-radius: 6px;
+        padding: 2px;
+      }
+      main {
+        max-width: 760px;
+        margin: 2rem auto;
+        padding: 2rem 1.5rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+      h1 {
+        color: var(--text-h);
+        margin: 0 0 0.25rem;
+        font-size: 1.9rem;
+      }
+      h2 {
+        color: var(--brand);
+        font-size: 1.15rem;
+        margin: 2rem 0 0.5rem;
+      }
+      .updated {
+        color: var(--text-muted);
+        margin: 0 0 1.5rem;
+      }
+      a {
+        color: var(--link);
+      }
+      ul {
+        padding-left: 1.25rem;
+      }
+      li {
+        margin: 0.3rem 0;
+      }
+      @media (max-width: 600px) {
+        main {
+          margin: 0;
+          border: 0;
+          border-radius: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/"><img src="/logo.png" alt="" />Education Beyond Borders</a>
+    </header>
+
+    <main>
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: 28 September 2026</p>
+
+      <p>
+        Education Beyond Borders ("EBB", "we") is a STEM Muslims project that
+        records and translates free educational videos. This policy explains
+        what personal information the EBB platform at
+        <a href="https://ebb.stemmuslims.com">ebb.stemmuslims.com</a> collects,
+        how we use it, and the choices you have. The platform is used by EBB
+        volunteers (admins, teachers and translators), and accounts are created
+        by invitation only.
+      </p>
+
+      <h2>Information we collect</h2>
+      <ul>
+        <li>
+          <strong>Account details</strong> that an EBB admin enters for you:
+          your name, email address, phone number, your roles (teacher and/or
+          translator), the subjects you teach and the languages you translate.
+        </li>
+        <li>
+          <strong>Sign-in information.</strong> If you sign in with Google, we
+          receive your email address, basic profile information and your
+          Google account ID, which we use only to confirm who you are. If you
+          sign in with a password, we store only a secure (bcrypt) hash of it,
+          never the password itself.
+        </li>
+        <li>
+          <strong>Profile picture</strong>, if you choose to upload one.
+        </li>
+        <li>
+          <strong>Content you upload</strong>: lesson videos and caption
+          (subtitle) files.
+        </li>
+        <li>
+          <strong>Activity records</strong>: which tasks you claim, release or
+          complete, and when.
+        </li>
+      </ul>
+
+      <h2>How we use it</h2>
+      <p>
+        We use this information only to run the platform: to let you sign in,
+        match you to recording and translation tasks, show who is working on
+        what, and publish the finished educational videos. We do not sell your
+        information, use it for advertising, or share it with anyone except
+        the service providers listed below.
+      </p>
+
+      <h2>Where your information is stored</h2>
+      <p>
+        We use the following service providers to host the platform. Each
+        processes data on our behalf:
+      </p>
+      <ul>
+        <li>a managed PostgreSQL database provider (account details and activity records);</li>
+        <li>Koyeb (our backend server) and Netlify (this website);</li>
+        <li>Amazon Web Services S3 (uploaded videos, caption files and profile pictures);</li>
+        <li>Google / YouTube (sign-in with Google, and publishing lesson videos).</li>
+      </ul>
+
+      <h2>YouTube</h2>
+      <p>
+        EBB uses YouTube API Services. Lesson videos uploaded to the platform
+        are published to EBB's own YouTube channel, usually as unlisted
+        videos. We never access or post to your personal YouTube account. When
+        a video is taken down on the platform, it is made private on YouTube.
+        YouTube's handling of these videos is covered by the
+        <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a>
+        and the
+        <a href="https://policies.google.com/privacy">Google Privacy Policy</a>.
+      </p>
+
+      <h2>Google user data</h2>
+      <p>
+        Our use of information received from Google APIs follows the
+        <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>,
+        including its Limited Use requirements. You can remove EBB's access to
+        your Google account at any time from your
+        <a href="https://myaccount.google.com/permissions">Google account permissions</a>
+        page.
+      </p>
+
+      <h2>Cookies and local storage</h2>
+      <p>
+        We do not use advertising or analytics cookies. After you sign in, your
+        browser's local storage keeps a sign-in token so you stay logged in;
+        signing out removes it. The site loads its font from Google Fonts,
+        which means Google receives your IP address when the page loads.
+      </p>
+
+      <h2>How long we keep it</h2>
+      <p>
+        We keep your account details for as long as you volunteer with EBB,
+        and delete them on request. Published lesson videos stay in the EBB
+        library unless they are taken down.
+      </p>
+
+      <h2>Your choices</h2>
+      <p>
+        You can ask us to show you, correct or delete the personal information
+        we hold about you. Email us at
+        <a href="mailto:stemmus@ic.ac.uk">stemmus@ic.ac.uk</a>.
+      </p>
+
+      <h2>Changes to this policy</h2>
+      <p>
+        If we change this policy, we will update it on this page and change
+        the date at the top.
+      </p>
+    </main>
+  </body>
+</html>
