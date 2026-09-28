@@ -96,14 +96,9 @@ export interface TopicDetail {
   translated_languages: Language[];
 }
 
-export interface StepResult {
-  success: boolean;
-  error: string | null;
-}
-
+// Only returned on success — a failed upload is an HTTP error (thrown by the API client).
 export interface UploadResponse {
-  success: boolean;
+  success: true;
   message: string;
-  steps: { s3: StepResult; youtube: StepResult; database: StepResult };
-  topic: Topic | null;
+  topic: Topic;
 }

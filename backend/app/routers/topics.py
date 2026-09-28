@@ -60,6 +60,41 @@ def _step(success: bool, error: str | None = None) -> dict:
     return {"success": success, "error": error}
 
 
+def _delete_s3_object(key: str) -> None:
+    """Best-effort S3 delete (cleanup / takedown); failures are ignored."""
+    try:
+        s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=key)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _privatise_youtube_video(video_id: str) -> None:
+    """Best-effort YouTube takedown (made private, not deleted); failures are ignored."""
+    try:
+        set_video_privacy(video_id, "private")
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _upload_failed(session: Session, topic: Topic, message: str) -> HTTPException:
+    """Record why a video upload failed on the topic (best effort) and build the
+    error to raise. Nothing else on the topic or its task is changed."""
+    try:
+        topic.video_error = message
+        topic.updated_at = datetime.now(timezone.utc)
+        session.add(topic)
+        session.commit()
+    except Exception:  # noqa: BLE001
+        session.rollback()
+    return HTTPException(502, f"{message}. Nothing was saved, please try again.")
+
+
+def next_queue_order(session: Session) -> int:
+    """The queue_order that puts a task at the back of the to-do queue."""
+    current = session.exec(select(col(Task.queue_order))).all()
+    return (max(current) + 1) if current else 0
+
+
 def get_topic_or_404(session: Session, topic_id: int) -> Topic:
     topic = session.get(Topic, topic_id)
     if not topic or not topic.is_active:
@@ -497,9 +532,13 @@ async def upload_topic_video(
     user: User = Depends(get_current_user),
 ):
     """Upload (or hard-replace) the video for a topic. The holder of the topic's
-    in-progress recording task (or an admin) may upload. Publishes to S3 + YouTube,
-    records the result on the topic, and marks the recording task COMPLETED. Any
-    previous video is taken down (S3 object deleted, old YouTube video privatised)."""
+    in-progress recording task (or an admin) may upload.
+
+    All-or-nothing: S3, then YouTube, then the DB. Only when all three succeed is
+    the video recorded on the topic, the recording task marked COMPLETED and any
+    previous video taken down (S3 object deleted, old YouTube video privatised).
+    If a step fails, whatever was already uploaded is cleaned up, the topic and
+    task are left as they were (apart from video_error) and a 502 is returned."""
     topic = get_topic_or_404(session, topic_id)
     if topic.level_type != LevelType.TOPIC:
         raise HTTPException(400, "Only TOPIC-level items can hold a video")
@@ -518,33 +557,24 @@ async def upload_topic_video(
     old_s3_key = topic.s3_key
     old_youtube_id = topic.youtube_video_id
 
-    steps = {
-        "s3": _step(False, "not attempted"),
-        "youtube": _step(False, "not attempted"),
-        "database": _step(False, "not attempted"),
-    }
-
     filename = file.filename or "video.mp4"
     s3_key = f"videos/{uuid.uuid4().hex}/{filename}"
     suffix = os.path.splitext(filename)[1]
     video_title = title.strip() or topic.name
 
     tmp_path: str | None = None
-    s3_url: str | None = None
-    youtube_video_id: str | None = None
-    youtube_url: str | None = None
     try:
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             tmp_path = tmp.name
             while chunk := await file.read(1024 * 1024):
                 tmp.write(chunk)
 
+        # S3 first: if it fails, YouTube is skipped (saves upload quota) and
+        # there is nothing to clean up.
         try:
             s3_client.upload_file(tmp_path, S3_BUCKET_NAME, s3_key)
-            s3_url = _s3_url(s3_key)
-            steps["s3"] = _step(True)
         except Exception as exc:  # noqa: BLE001
-            steps["s3"] = _step(False, str(exc))
+            raise _upload_failed(session, topic, f"S3 upload failed: {exc}")
 
         try:
             result = upload_video(
@@ -554,69 +584,47 @@ async def upload_topic_video(
                 privacy_status=privacy_status,
             )
             youtube_video_id = result["id"]
-            youtube_url = f"https://www.youtube.com/watch?v={youtube_video_id}"
-            steps["youtube"] = _step(True)
         except Exception as exc:  # noqa: BLE001
-            steps["youtube"] = _step(False, str(exc))
+            _delete_s3_object(s3_key)
+            raise _upload_failed(session, topic, f"YouTube upload failed: {exc}")
     finally:
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
 
-    uploaded_anything = steps["s3"]["success"] or steps["youtube"]["success"]
-    failed = [name for name in ("s3", "youtube") if not steps[name]["success"]]
-    error_summary = (
-        None if not failed else "; ".join(f"{n}: {steps[n]['error']}" for n in failed)
-    )
-
     try:
-        if steps["s3"]["success"]:
-            topic.s3_key = s3_key
-            topic.s3_url = s3_url
-        if steps["youtube"]["success"]:
-            topic.youtube_video_id = youtube_video_id
-            topic.youtube_url = youtube_url
-            topic.youtube_privacy_status = privacy_status
-        topic.uploaded_by = user.email
-        topic.video_error = error_summary
         now = datetime.now(timezone.utc)
-        if uploaded_anything:
-            topic.video_state = VideoState.COMPLETED
-            topic.video_uploaded_at = now
-            if recording_task:
-                recording_task.status = TaskStatus.COMPLETED
-                recording_task.completed_at = now
-                recording_task.updated_at = now
-                session.add(recording_task)
+        topic.s3_key = s3_key
+        topic.s3_url = _s3_url(s3_key)
+        topic.youtube_video_id = youtube_video_id
+        topic.youtube_url = f"https://www.youtube.com/watch?v={youtube_video_id}"
+        topic.youtube_privacy_status = privacy_status
+        topic.uploaded_by = user.email
+        topic.video_error = None
+        topic.video_state = VideoState.COMPLETED
+        topic.video_uploaded_at = now
         topic.updated_at = now
         session.add(topic)
+        if recording_task:
+            recording_task.status = TaskStatus.COMPLETED
+            recording_task.completed_at = now
+            recording_task.updated_at = now
+            session.add(recording_task)
         session.commit()
         session.refresh(topic)
-        steps["database"] = _step(True)
     except Exception as exc:  # noqa: BLE001
         session.rollback()
-        steps["database"] = _step(False, str(exc))
+        _delete_s3_object(s3_key)
+        _privatise_youtube_video(youtube_video_id)
+        raise _upload_failed(session, topic, f"Saving the upload failed: {exc}")
 
-    if steps["s3"]["success"] and old_s3_key and old_s3_key != s3_key:
-        try:
-            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=old_s3_key)
-        except Exception:  # noqa: BLE001
-            pass
-    if steps["youtube"]["success"] and old_youtube_id and old_youtube_id != youtube_video_id:
-        try:
-            set_video_privacy(old_youtube_id, "private")
-        except Exception:  # noqa: BLE001
-            pass
+    if old_s3_key and old_s3_key != s3_key:
+        _delete_s3_object(old_s3_key)
+    if old_youtube_id and old_youtube_id != youtube_video_id:
+        _privatise_youtube_video(old_youtube_id)
 
-    success = all(step["success"] for step in steps.values())
-    failed_steps = [name for name, step in steps.items() if not step["success"]]
     return {
-        "success": success,
-        "message": (
-            "Video uploaded to S3, YouTube and recorded on the topic."
-            if success
-            else f"Upload incomplete — failed: {', '.join(failed_steps)}."
-        ),
-        "steps": steps,
+        "success": True,
+        "message": "Video uploaded to S3, YouTube and recorded on the topic.",
         "topic": _public_topic(topic, user.is_admin),
     }
 
@@ -628,7 +636,8 @@ def remove_topic_video(
     user: User = Depends(get_current_user),
 ):
     """Take a topic's video down: delete the S3 object, make the YouTube video
-    private, and clear the video fields. The uploader or an admin may do this."""
+    private, clear the video fields, and put the recording task that produced it
+    back in the queue so it gets re-recorded. The uploader or an admin may do this."""
     topic = get_topic_or_404(session, topic_id)
     if not user.is_admin and topic.uploaded_by != user.email:
         raise HTTPException(403, "You can only remove a video you uploaded")
@@ -662,8 +671,25 @@ def remove_topic_video(
         topic.video_error = None
         topic.video_uploaded_at = None
         topic.video_state = VideoState.UNASSIGNED
-        topic.updated_at = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc)
+        topic.updated_at = now
         session.add(topic)
+        # Requeue the latest recording task if it's the completed one behind this
+        # video; if a newer one is already open, leave the queue alone.
+        latest_recording = session.exec(
+            select(Task)
+            .where(Task.topic_id == topic.id, Task.task_type == TaskType.RECORDING)
+            .order_by(col(Task.created_at).desc())
+        ).first()
+        if latest_recording and latest_recording.status == TaskStatus.COMPLETED:
+            latest_recording.status = TaskStatus.QUEUED
+            latest_recording.assignee_email = None
+            latest_recording.claimed_at = None
+            latest_recording.released_at = None
+            latest_recording.completed_at = None
+            latest_recording.queue_order = next_queue_order(session)
+            latest_recording.updated_at = now
+            session.add(latest_recording)
         session.commit()
         steps["database"] = _step(True)
     except Exception as exc:  # noqa: BLE001

@@ -17,6 +17,7 @@ from app.routers.topics import (
     _step,
     _user_covers_language,
     get_topic_or_404,
+    next_queue_order,
     subject_topic_id,
     user_teaches_subject,
 )
@@ -105,11 +106,6 @@ def _active_task(session: Session, email: str) -> Task | None:
     ).first()
 
 
-def _next_queue_order(session: Session) -> int:
-    current = session.exec(select(col(Task.queue_order))).all()
-    return (max(current) + 1) if current else 0
-
-
 def _get_task_or_404(session: Session, task_id: int) -> Task:
     task = session.get(Task, task_id)
     if not task:
@@ -164,7 +160,7 @@ def post_task(
         task_type=payload.task_type,
         language_id=language_id,
         status=TaskStatus.QUEUED,
-        queue_order=_next_queue_order(session),
+        queue_order=next_queue_order(session),
         requested_at=now,
         created_at=now,
         updated_at=now,
@@ -382,7 +378,7 @@ def requeue_task(
     task.assignee_email = None
     task.claimed_at = None
     task.released_at = None
-    task.queue_order = _next_queue_order(session)
+    task.queue_order = next_queue_order(session)
     task.updated_at = now
     session.add(task)
     session.commit()
@@ -545,7 +541,7 @@ def admin_update_task(
         task.released_at = None
         task.completed_at = None
         if task.status != TaskStatus.QUEUED:
-            task.queue_order = _next_queue_order(session)
+            task.queue_order = next_queue_order(session)
 
     elif payload.status == TaskStatus.RELEASED:
         if task.status != TaskStatus.RELEASED:
